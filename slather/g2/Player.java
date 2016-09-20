@@ -17,31 +17,33 @@ public class Player implements slather.sim.Player {
     public void init(double d, int t) {
         gen = new Random();
         tailLength = t;
-        radius = tailLength / (2*Math.PI);
+        radius = 2 * tailLength / (2*Math.PI);
         dTheta = 1 / radius;
     }
+    // private static final int BYTE_MASK = 0b11111111;
 
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-        if (player_cell.getDiameter() >= 2) // reproduce whenever possible
-            return new Move(true, (byte)-1, (byte)-1);
+        double theta = byte2angle( memory );
+        if (player_cell.getDiameter() >= 2){
+            byte memory2 = angle2byte( normalizeAngle(theta + Math.PI,0), memory );
+            return new Move(true, memory, memory2);
+        } // reproduce whenever possible
+            
         // if (memory > 0) { // follow previous direction unless it would cause a collision
         // Try to go in circle
-        double theta = byte2angle( memory );
-        theta = normalizeAngle(theta + dTheta);
-        memory = angle2byte( theta );
-        Point vector = angle2vector(theta);
-        // check for collisions
-        if (!collides( player_cell, vector, nearby_cells, nearby_pheromes))
-            return new Move(vector, memory);
-        // }
 
-        // if no previous direction specified or if there was a collision, try random directions to go in until one doesn't collide
-        for (int i=0; i<4; i++) {
-            // Try to make a recursive call here
-            byte arg = (byte) (gen.nextInt(256)-128);
-            vector = angle2vector( byte2angle(arg) );
-            if (!collides(player_cell, vector, nearby_cells, nearby_pheromes)) 
-                return new Move(vector, arg);
+        double nextTheta = normalizeAngle(theta + dTheta,0);
+        byte nextMemory = 0;
+        Point vector = null;
+
+        // Try to go any of four normal directions.
+        for(int i=0; i<4; ++i) {
+            nextMemory = angle2byte( nextTheta, memory );
+            // System.out.println("memory,angles " +memory+","+nextMemory+"," +theta+","+nextTheta);
+            vector = angle2vector( nextTheta);
+            if (!collides( player_cell, vector, nearby_cells, nearby_pheromes))
+                return new Move(vector, nextMemory);
+            nextTheta += Math.PI/2;
         }
 
         // if all tries fail, just chill in place
@@ -66,32 +68,39 @@ public class Player implements slather.sim.Player {
         return false;
     }
 
+    private static final int ANGLE_BITS = 8;
+    private static final int ANGLE_MAX = 1 << ANGLE_BITS;
+    private static final int ANGLE_MASK = ANGLE_MAX - 1;
+
+    private static final double TWOPI = 2*Math.PI;
+
     private double byte2angle(byte b) {
-        // -128 <= b < 127
+        // -128 <= b < 128
         // -1 <= b/128 < 1
         // -pi <= a < pi
-        return Math.PI * ((double) b)/128;
+        return normalizeAngle(TWOPI * (((double) ((b) & ANGLE_MASK) ) / ANGLE_MAX), 0);
     }
 
-    private byte angle2byte(double a) {
-        return (byte)(int)(128*(a/Math.PI));
+    private byte angle2byte(double a, byte b) {
+        final double actualAngle = ((normalizeAngle(a,0) / TWOPI)*ANGLE_MAX);
+        final int anglePart = (int) (((int)actualAngle) & ANGLE_MASK);
+        final byte memoryPart = (byte) ( b & ~ANGLE_MASK);
+        return (byte) ((anglePart | memoryPart));
     }
 
-    private double normalizeAngle(double a) {
-        double ap = a-2*Math.PI;
-        if( ap >= -Math.PI ) {  // a > Math.PI
-            return ap;
-        }                       // Math.PI < a
-        ap = a+2*Math.PI;
-        if( ap <= Math.PI ) {   // a <= -Math.PI
-            return ap;
+    private double normalizeAngle(double a, double start) {
+        if( a < start ) {
+            return normalizeAngle( a+TWOPI, start);
+        } else if (a >= (start+TWOPI)) {
+            return normalizeAngle( a-TWOPI, start);
+        } else {
+            return a;
         }
-        return a;
     }
 
     private Point angle2vector(double a) {
-        double dx = Cell.move_dist * Math.cos( a );
-        double dy = Cell.move_dist * Math.sin( a );
+        double dx = Cell.move_dist * Math.cos( normalizeAngle(a, -Math.PI) );
+        double dy = Cell.move_dist * Math.sin( normalizeAngle(a, -Math.PI) );
         return new Point(dx, dy);
     }
 
