@@ -26,4 +26,7 @@ Each member can publish to their own branch and merging can be done whenever req
    - Scouts shoot in tangent directions
    - Currently doing well for both casses - 1 against many and 1 against 1
    - Need to run more simulations
+   - Reduced bits for direction
+   - Added bit to assign role
+   - Currently using 6 bits
 
