@@ -68,7 +68,7 @@ public class Player implements slather.sim.Player {
         return false;
     }
 
-    private static final int ANGLE_BITS = 8;
+    private static final int ANGLE_BITS = 5;
     private static final int ANGLE_MAX = 1 << ANGLE_BITS;
     private static final int ANGLE_MASK = ANGLE_MAX - 1;
 
@@ -85,6 +85,7 @@ public class Player implements slather.sim.Player {
         final double actualAngle = ((normalizeAngle(a,0) / TWOPI)*ANGLE_MAX);
         final int anglePart = (int) (((int)actualAngle) & ANGLE_MASK);
         final byte memoryPart = (byte) ( b & ~ANGLE_MASK);
+        // System.out.println("angle2byte "+ memoryPart +","+ anglePart +","+ (normalizeAngle(a,0)/TWOPI) +","+ ANGLE_MAX +","+ a);
         return (byte) ((anglePart | memoryPart));
     }
 
@@ -99,8 +100,8 @@ public class Player implements slather.sim.Player {
     }
 
     private Point angle2vector(double a) {
-        double dx = Cell.move_dist * Math.cos( normalizeAngle(a, -Math.PI) );
-        double dy = Cell.move_dist * Math.sin( normalizeAngle(a, -Math.PI) );
+        double dx = Cell.move_dist * Math.cos(a);
+        double dy = Cell.move_dist * Math.sin(a);
         return new Point(dx, dy);
     }
 
