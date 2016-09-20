@@ -40,10 +40,10 @@ public class Player implements slather.sim.Player {
             double r = cell.getDiameter() * 0.5 + radius;
             double d = position.distance(p);
             double dx = p.x - position.x, dy = p.y - position.y;
-            if (dx > size - vision) dx -= size;
-            if (dx < vision - size) dx += size;
-            if (dy > size - vision) dy -= size;
-            if (dy < vision - size) dy += size;
+            if (Math.abs(dx) > Math.abs(p.x + size - position.x)) dx = p.x + size - position.x;
+            if (Math.abs(dx) > Math.abs(p.x - size - position.x)) dx = p.x + size - position.x;
+            if (Math.abs(dy) > Math.abs(p.y + size - position.x)) dy = p.y + size - position.y;
+            if (Math.abs(dy) > Math.abs(p.y - size - position.x)) dy = p.y - size - position.y;
 
             acc_x -= dx; acc_y -= dy;
         }
@@ -52,10 +52,10 @@ public class Player implements slather.sim.Player {
             double r = radius;
             double d = position.distance(p);
             double dx = p.x - position.x, dy = p.y - position.y;
-            if (dx > size - vision) dx -= size;
-            if (dx < vision - size) dx += size;
-            if (dy > size - vision) dy -= size;
-            if (dy < vision - size) dy += size;
+            if (Math.abs(dx) > Math.abs(p.x + size - position.x)) dx = p.x + size - position.x;
+            if (Math.abs(dx) > Math.abs(p.x - size - position.x)) dx = p.x + size - position.x;
+            if (Math.abs(dy) > Math.abs(p.y + size - position.x)) dy = p.y + size - position.y;
+            if (Math.abs(dy) > Math.abs(p.y - size - position.x)) dy = p.y - size - position.y;
 
             acc_x -= dx; acc_y -= dy;
         }
