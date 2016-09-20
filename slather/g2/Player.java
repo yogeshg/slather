@@ -6,36 +6,27 @@ import slather.sim.Move;
 import slather.sim.Pherome;
 import java.util.*;
 
-
 public class Player implements slather.sim.Player {
 
     private Random gen;
     private int tailLength;
-    double radius;
-    double dTheta;
+    private double radius;
+    private double dTheta;
+    private double p_scout = 0.5;
+
 
     public void init(double d, int t) {
-        gen = new Random();
+        gen = new Random(System.currentTimeMillis());
         tailLength = t;
         radius = 2 * tailLength / (2*Math.PI);
         dTheta = 1 / radius;
     }
-    // private static final int BYTE_MASK = 0b11111111;
 
-    public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+    public Move playCircle(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         double theta = byte2angle( memory );
-        if (player_cell.getDiameter() >= 2){
-            byte memory2 = angle2byte( normalizeAngle(theta + Math.PI,0), memory );
-            return new Move(true, memory, memory2);
-        } // reproduce whenever possible
-            
-        // if (memory > 0) { // follow previous direction unless it would cause a collision
-        // Try to go in circle
-
         double nextTheta = normalizeAngle(theta + dTheta,0);
         byte nextMemory = 0;
         Point vector = null;
-
         // Try to go any of four normal directions.
         for(int i=0; i<4; ++i) {
             nextMemory = angle2byte( nextTheta, memory );
@@ -48,6 +39,50 @@ public class Player implements slather.sim.Player {
 
         // if all tries fail, just chill in place
         return new Move(new Point(0,0), (byte)0);
+    }
+
+    public Move playScout(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+        double theta = byte2angle( memory );
+        double nextTheta = theta;
+        byte nextMemory = 0;
+        Point vector = null;
+        // Try to go any of four normal directions.
+        for(int i=0; i<4; ++i) {
+            nextMemory = angle2byte( nextTheta, memory );
+            vector = angle2vector( nextTheta);
+            if (!collides( player_cell, vector, nearby_cells, nearby_pheromes))
+                return new Move(vector, nextMemory);
+            nextTheta += Math.PI/2;
+        }
+
+        // if all tries fail, just chill in place
+        return new Move(new Point(0,0), (byte)0);
+    }
+
+    public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+        double theta = byte2angle( memory );
+        if (player_cell.getDiameter() >= 2){
+            byte memory2 = angle2byte( normalizeAngle(theta + Math.PI,0), memory );
+            if( !byteIsScout(memory) && (gen.nextDouble() < p_scout)) {
+                System.out.println("Generating a scout");
+                memory2 = (byte) (memory2|ROLE_SCOUT);
+            } else {
+                memory2 = (byte) (memory2|ROLE_CIRCLE);
+            }
+            return new Move(true, memory, memory2);
+        } // reproduce whenever possible
+            
+        // if (memory > 0) { // follow previous direction unless it would cause a collision
+        // Try to go in circle
+
+        if(byteIsScout(memory)) {
+            return playScout(player_cell, memory, nearby_cells, nearby_pheromes);
+        } else {
+            return playCircle(player_cell, memory, nearby_cells, nearby_pheromes);
+        }
+
+        // if all tries fail, just chill in place
+        // return new Move(new Point(0,0), (byte)0);
     }
 
     // check if moving player_cell by vector collides with any nearby cell or hostile pherome
@@ -69,8 +104,21 @@ public class Player implements slather.sim.Player {
     }
 
     private static final int ANGLE_BITS = 5;
+    private static final int ANGLE_MIN = 0;
     private static final int ANGLE_MAX = 1 << ANGLE_BITS;
     private static final int ANGLE_MASK = ANGLE_MAX - 1;
+
+    private static final int ROLE_BITS = 1;
+    private static final int ROLE_MIN = ANGLE_MAX;
+    private static final int ROLE_MAX = ROLE_MIN + ( 1<<ROLE_BITS );
+    private static final int ROLE_MASK = (ROLE_MAX - 1) & ~ANGLE_MASK;
+    private static final int ROLE_CIRCLE = 0 << ANGLE_BITS;
+    private static final int ROLE_SCOUT = 1 << ANGLE_BITS;
+
+    private boolean byteIsScout(byte b){
+        // System.out.printf("%d %d %d\n",b,ROLE_MASK,ROLE_SCOUT);
+        return (b&ROLE_MASK)==ROLE_SCOUT;
+    }
 
     private static final double TWOPI = 2*Math.PI;
 

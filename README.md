@@ -17,6 +17,13 @@ Each member can publish to their own branch and merging can be done whenever req
    - This strategy is good when playing 1 against many g0
    - Does not perform well with just g0 vs g2
    - Inflexion point around 40 points with 1 g2 vs 9 g0
-   - [ ] TODO: Spawn "scouts" with random probability
+   - [x] TODO: Spawn "scouts" with random probability
    - If too many collisions, scout!
+ * Circle + Scout
+   - Scouts are spawned from a Circle bot with a certain probability p (currently 0.5)
+   - Scouts spawn one scout and one circle
+   - Circles spawn one circle and one scout with probability p
+   - Scouts shoot in tangent directions
+   - Currently doing well for both casses - 1 against many and 1 against 1
+   - Need to run more simulations
 
