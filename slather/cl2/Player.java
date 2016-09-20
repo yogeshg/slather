@@ -1,4 +1,4 @@
-package slather.cl1;
+package slather.cl2;
 
 import slather.sim.Cell;
 import slather.sim.Point;
@@ -44,6 +44,10 @@ public class Player implements slather.sim.Player {
             if (dx < vision - size) dx += size;
             if (dy > size - vision) dy -= size;
             if (dy < vision - size) dy += size;
+            if (Math.abs(d) < 1e-7) continue;
+            dx /= d; dy /= d; 
+            double amp = Math.asin(Math.min(1, r / d));
+            dx *= amp; dy *= amp;
 
             acc_x -= dx; acc_y -= dy;
         }
@@ -56,6 +60,11 @@ public class Player implements slather.sim.Player {
             if (dx < vision - size) dx += size;
             if (dy > size - vision) dy -= size;
             if (dy < vision - size) dy += size;
+            if (Math.abs(d) < 1e-7) continue;
+            dx /= d; dy /= d;
+
+            double amp = Math.asin(Math.min(1, r / d));
+            dx *= amp; dy *= amp;
 
             acc_x -= dx; acc_y -= dy;
         }
