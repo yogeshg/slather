@@ -12,7 +12,7 @@ public class Player implements slather.sim.Player {
     private int tailLength;
     private double radius;
     private double dTheta;
-    private double p_scout = 0.3;
+    private double p_circle = 0;
     private double size = 100;
 
     public void init(double d, int t) {
@@ -42,8 +42,7 @@ public class Player implements slather.sim.Player {
     }
 
     public Move playScout(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-        //Below I treat my cell as a point, and every other has radius increase by a certain number
-        memory = (byte) (memory|ROLE_SCOUT);
+        memory = (byte) (memory& (~ROLE_CIRCLE));
         double acc_x = 0, acc_y = 0;
         Point position = player_cell.getPosition();
         double radius = player_cell.getDiameter() * 0.5;
@@ -74,7 +73,7 @@ public class Player implements slather.sim.Player {
         return new Move(new Point(acc_x / t, acc_y / t), memory);
     }
 
-    //return true if there are more than three nearby friendly cell
+    //return true if there are more than one nearby friendly cell
     private boolean crowded(Cell player_cell, Set<Cell> nearby_cells){
         Iterator<Cell> itr = nearby_cells.iterator();
         int count = 0;
@@ -82,29 +81,30 @@ public class Player implements slather.sim.Player {
             Cell c = itr.next();
             if(c.player == player_cell.player) count++;
         }
-        //if(count >= 3) System.out.println("crowded");
         return count >= 1;
     }
 
+    //by default goes scout;
+    //everytime we split there's a p_circle chance we go circle; 
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         double theta = byte2angle( memory );
         // reproduce whenever possible
         if (player_cell.getDiameter() >= 2){
             byte memory2 = angle2byte( normalizeAngle(theta + Math.PI,0), memory );
-            if(byteIsScout(memory) && (gen.nextDouble() < p_scout)) {
-                System.out.println("Generating a circle");
+            if(!byteIsCircle(memory) && (gen.nextDouble() < p_circle)) {
+                //System.out.println("Generating a circle");
                 memory2 = (byte) (memory2|ROLE_CIRCLE);
             } else {
-                memory2 = (byte) (memory2|ROLE_SCOUT);
+                //System.out.println("Generating a scout");
+                memory2 = (byte) (memory2& (~ROLE_CIRCLE));
             }
-            memory2 = (byte) (memory2|ROLE_SCOUT);
             return new Move(true, memory, memory2);
         } 
 
-        boolean nextScout = byteIsScout(memory);
-        if(crowded(player_cell,nearby_cells)) nextScout = false;
-        //if(!nextScout) System.out.println("circle");
-        if(nextScout) 
+        //if surrounding is too crowded, play circle
+        boolean nextCircle = byteIsCircle(memory);
+        if(crowded(player_cell,nearby_cells)) nextCircle = true;
+        if(!nextCircle) 
             return playScout(player_cell, memory, nearby_cells, nearby_pheromes);
         return playCircle(player_cell, memory, nearby_cells, nearby_pheromes);
     }
@@ -136,12 +136,12 @@ public class Player implements slather.sim.Player {
     private static final int ROLE_MIN = ANGLE_MAX;
     private static final int ROLE_MAX = ROLE_MIN + ( 1<<ROLE_BITS );
     private static final int ROLE_MASK = (ROLE_MAX - 1) & ~ANGLE_MASK;
-    private static final int ROLE_CIRCLE = 0 << ANGLE_BITS;
-    private static final int ROLE_SCOUT = 1 << ANGLE_BITS;
+    private static final int ROLE_SCOUT = 0 << ANGLE_BITS;
+    private static final int ROLE_CIRCLE = 1 << ANGLE_BITS;
 
-    private boolean byteIsScout(byte b){
-        //System.out.printf("%d %d %d\n",b,ROLE_MASK,ROLE_SCOUT);
-        return (b&ROLE_MASK)==ROLE_SCOUT;
+    private boolean byteIsCircle(byte b){
+        //System.out.printf("%d %d %d\n",b,ROLE_MASK,ROLE_CIRCLE);
+        return (b&ROLE_MASK)==ROLE_CIRCLE;
     }
 
     private static final double TWOPI = 2*Math.PI;
