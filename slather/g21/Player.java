@@ -1,4 +1,4 @@
-package slather.g2;
+package slather.g21;
 
 import slather.sim.Cell;
 import slather.sim.Point;
@@ -12,14 +12,15 @@ public class Player implements slather.sim.Player {
     private int tailLength;
     private double radius;
     private double dTheta;
-    private double p_scout = 0.3;
-    private double size = 100;
+    private double p_scout = 0.5;
+
 
     public void init(double d, int t) {
         gen = new Random(System.currentTimeMillis());
         tailLength = t;
         radius = 2 * tailLength / (2*Math.PI);
         dTheta = 1 / radius;
+        System.out.println("vision: " + d);
     }
 
     public Move playCircle(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
@@ -38,75 +39,51 @@ public class Player implements slather.sim.Player {
         }
 
         // if all tries fail, just chill in place
-        return new Move(new Point(0,0), (byte)1);
+        return new Move(new Point(0,0), (byte)0);
     }
 
     public Move playScout(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-        //Below I treat my cell as a point, and every other has radius increase by a certain number
-        memory = (byte) (memory|ROLE_SCOUT);
-        double acc_x = 0, acc_y = 0;
-        Point position = player_cell.getPosition();
-        double radius = player_cell.getDiameter() * 0.5;
-        for (Cell cell : nearby_cells) {
-            Point p = cell.getPosition();
-            double dx = p.x - position.x, dy = p.y - position.y;
-            if (Math.abs(dx) > Math.abs(p.x + size - position.x)) dx = p.x + size - position.x;
-            if (Math.abs(dx) > Math.abs(p.x - size - position.x)) dx = p.x - size - position.x;
-            if (Math.abs(dy) > Math.abs(p.y + size - position.y)) dy = p.y + size - position.y;
-            if (Math.abs(dy) > Math.abs(p.y - size - position.y)) dy = p.y - size - position.y;
-
-            acc_x -= dx; acc_y -= dy;
-        }
-        for (Pherome pherome : nearby_pheromes) {
-            Point p = pherome.getPosition();
-            double dx = p.x - position.x, dy = p.y - position.y;
-            if (Math.abs(dx) > Math.abs(p.x + size - position.x)) dx = p.x + size - position.x;
-            if (Math.abs(dx) > Math.abs(p.x - size - position.x)) dx = p.x - size - position.x;
-            if (Math.abs(dy) > Math.abs(p.y + size - position.y)) dy = p.y + size - position.y;
-            if (Math.abs(dy) > Math.abs(p.y - size - position.y)) dy = p.y - size - position.y;
-
-            acc_x -= dx; acc_y -= dy;
+        double theta = byte2angle( memory );
+        double nextTheta = theta;
+        byte nextMemory = 0;
+        Point vector = null;
+        // Try to go any of four normal directions.
+        for(int i=0; i<4; ++i) {
+            nextMemory = angle2byte( nextTheta, memory );
+            vector = angle2vector( nextTheta);
+            if (!collides( player_cell, vector, nearby_cells, nearby_pheromes))
+                return new Move(vector, nextMemory);
+            nextTheta += Math.PI/2;
         }
 
-        //if (width > 0) 
-        if (Math.abs(acc_x) < 1e-7 && Math.abs(acc_y) < 1e-7) acc_x = 1;
-        double t = Math.hypot(acc_x, acc_y);
-        return new Move(new Point(acc_x / t, acc_y / t), memory);
-    }
-
-    //return true if there are more than three nearby friendly cell
-    private boolean crowded(Cell player_cell, Set<Cell> nearby_cells){
-        Iterator<Cell> itr = nearby_cells.iterator();
-        int count = 0;
-        while(itr.hasNext()){
-            Cell c = itr.next();
-            if(c.player == player_cell.player) count++;
-        }
-        //if(count >= 3) System.out.println("crowded");
-        return count >= 1;
+        // if all tries fail, just chill in place
+        return new Move(new Point(0,0), (byte)0);
     }
 
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         double theta = byte2angle( memory );
-        // reproduce whenever possible
         if (player_cell.getDiameter() >= 2){
             byte memory2 = angle2byte( normalizeAngle(theta + Math.PI,0), memory );
-            if(byteIsScout(memory) && (gen.nextDouble() < p_scout)) {
-                System.out.println("Generating a circle");
-                memory2 = (byte) (memory2|ROLE_CIRCLE);
-            } else {
+            if( !byteIsScout(memory) && (gen.nextDouble() < p_scout)) {
+                //System.out.println("Generating a scout");
                 memory2 = (byte) (memory2|ROLE_SCOUT);
+            } else {
+                memory2 = (byte) (memory2|ROLE_CIRCLE);
             }
-            memory2 = (byte) (memory2|ROLE_SCOUT);
             return new Move(true, memory, memory2);
-        } 
+        } // reproduce whenever possible
+            
+        // if (memory > 0) { // follow previous direction unless it would cause a collision
+        // Try to go in circle
 
-        boolean nextScout = byteIsScout(memory);
-        if(crowded(player_cell,nearby_cells)) nextScout = false;
-        //if(!nextScout) System.out.println("circle");
-        if(nextScout) 
+        if(byteIsScout(memory)) {
             return playScout(player_cell, memory, nearby_cells, nearby_pheromes);
-        return playCircle(player_cell, memory, nearby_cells, nearby_pheromes);
+        } else {
+            return playCircle(player_cell, memory, nearby_cells, nearby_pheromes);
+        }
+
+        // if all tries fail, just chill in place
+        // return new Move(new Point(0,0), (byte)0);
     }
 
     // check if moving player_cell by vector collides with any nearby cell or hostile pherome
@@ -140,7 +117,7 @@ public class Player implements slather.sim.Player {
     private static final int ROLE_SCOUT = 1 << ANGLE_BITS;
 
     private boolean byteIsScout(byte b){
-        //System.out.printf("%d %d %d\n",b,ROLE_MASK,ROLE_SCOUT);
+        // System.out.printf("%d %d %d\n",b,ROLE_MASK,ROLE_SCOUT);
         return (b&ROLE_MASK)==ROLE_SCOUT;
     }
 
