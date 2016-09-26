@@ -1,4 +1,4 @@
-package slather.cl2;
+package slather.cl3;
 
 import slather.sim.Cell;
 import slather.sim.Point;
@@ -7,7 +7,7 @@ import slather.sim.Pherome;
 import java.util.*;
 import java.lang.*;
 
-// Weight: constant
+// Weight: 1 / distance
 
 
 public class Player implements slather.sim.Player {
@@ -38,6 +38,8 @@ public class Player implements slather.sim.Player {
             Point dir = correctedSubtract(p, position);
 
             dir = normalize(dir);
+            if (Math.abs(d) > 1e-7)
+                dir = multiply(dir, 1.0 / d);
 
             direction = add(direction, multiply(dir, -1));
         }
@@ -49,6 +51,8 @@ public class Player implements slather.sim.Player {
             Point dir = correctedSubtract(p, position);
 
             dir = normalize(dir);
+            if (Math.abs(d) > 1e-7)
+                dir = multiply(dir, 1.0 / d);
 
             direction = add(direction, multiply(dir, -1));
         }
