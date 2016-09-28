@@ -18,13 +18,22 @@ public class Player implements slather.sim.Player {
     private double p_circle = 0;
     private double size;
 
+    private Chiller chiller = null;
+    // Doing new Chiller(); here throws stack over flow error. unclear why.
+
     public void init(double d, int t, int side_length) {
+        System.out.println("Player init");
+
         gen = new Random(System.currentTimeMillis());
         vision = d;
         tailLength = t;
         radius = 2 * tailLength / (2*Math.PI);
         dTheta = 1 / radius;
         size = side_length;
+
+        chiller = new Chiller();
+        chiller.init(d, t, side_length);
+
     }
 
     public Move playCircle(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
@@ -44,7 +53,7 @@ public class Player implements slather.sim.Player {
         }
 
         // if all tries fail, just chill in place
-        return new Move(new Vector(0,0), (byte)1);
+        return chiller.play(player_cell, memory, nearby_cells, nearby_pheromes);
     }
 
     //return true if there are more than one nearby friendly cell
