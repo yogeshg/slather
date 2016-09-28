@@ -1,3 +1,7 @@
+function pause() {
+    paused = (paused + 1) % 2;
+}
+
 function parse_float(x)
 {
     if (isNaN(parseFloat(x)) || !isFinite(x))
@@ -18,7 +22,7 @@ function process(data)
     // check the canvas size
     var canvas = document.getElementById("canvas");
     var colors = ["red", "green", "blue", "purple", "orange", "cyan", "yellow", "hotpink", "palegreen", "maroon"];
-    var y_base = 60;
+    var y_base = 90;
     var size = canvas.height - y_base;
     var xoffset = 30;    
     var x_base = (canvas.width - size) * 0.5;
@@ -41,28 +45,33 @@ function process(data)
     ctx.lineTo(x_base + size + xoffset, y_base + size);
     ctx.lineTo(x_base + xoffset,        y_base + size);
     ctx.lineTo(x_base + xoffset,        y_base);
-/*    ctx.moveTo(x_base + 1.5,        y_base + 1.5);
-    ctx.lineTo(x_base + size - 1.5, y_base + 1.5);
-    ctx.lineTo(x_base + size - 1.5, y_base + size - 1.5);
-    ctx.lineTo(x_base + 1.5,        y_base + size - 1.5);
-    ctx.lineTo(x_base + 1.5,        y_base + 1.5);*/
     ctx.lineWidth = 3;
     ctx.strokeStyle = "black";
     ctx.stroke();
 
-    // parse the scores
+   
+
     ctx.font = "18px Arial";
     ctx.textAlign = "left";
     ctx.lineWidth = 4;
     ctx.strokeStyle = "darkgrey";
+    // parse game status
+    ctx.strokeText("Total turns played: " + params[2], 0, y_base - 60);;
+    ctx.fillStyle = "black";
+    ctx.fillText("Total turns played: " + params[2], 0, y_base - 60);;
+    ctx.strokeText("Turns without reproduction: " + params[3], 0, y_base - 30);;
+    ctx.fillStyle = "black";
+    ctx.fillText("Turns without reproduction: " + params[3], 0, y_base - 30);;
+    
+    // parse the scores    
     scores = data[1].split(";");
     for (var i=0; i<scores.length; i++) {
 	coord = scores[i].split(",");
 	g = coord[0];
 	score = parse_float(coord[1]);
-	ctx.strokeText(g + " :  " + score, 0, y_base + 30*i + 30);
+	ctx.strokeText(g + " :  " + score, 0, y_base + 30*i + 60);
 	ctx.fillStyle = colors[i];
-	ctx.fillText(g + " :  " + score, 0, y_base + 30*i + 30);
+	ctx.fillText(g + " :  " + score, 0, y_base + 30*i + 60);
     }
     
     // parse the cells
@@ -110,7 +119,7 @@ function ajax(version, retries, timeout)
 	    if (xhr.status != 200)
 		throw "Invalid HTTP status: " + xhr.status;
 	    refresh = process(xhr.responseText);
-	    if (latest_version < version)
+	    if (latest_version < version && paused == 0)
 		latest_version = version;
 	    else
 		refresh = -1;
@@ -136,4 +145,5 @@ function ajax(version, retries, timeout)
     xhr.send();
 }
 
+var paused = 0;
 ajax(0, 10, 100);

@@ -1,4 +1,4 @@
-package slather.cl2;
+package slather.g23;
 
 import slather.sim.Cell;
 import slather.sim.Point;
@@ -7,13 +7,12 @@ import slather.sim.Pherome;
 import java.util.*;
 import java.lang.*;
 
-// Either there's a giant bug.
-// Or I'm complete rekt by the random bot
+// Weight: 1 / distance^2
 
 
 public class Player implements slather.sim.Player {
 
-	private double size = 100;
+    private final double size = 100;
 
     private Random gen;
     private double vision;
@@ -28,60 +27,84 @@ public class Player implements slather.sim.Player {
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         if (player_cell.getDiameter() >= 2) // reproduce whenever possible
             return new Move(true, (byte)-1, (byte)-1);
-
-
-
-        //Below I treat my cell as a point, and every other has radius increase by a certain number
-        double acc_x = 0, acc_y = 0;
         Point position = player_cell.getPosition();
         double radius = player_cell.getDiameter() * 0.5;
+        Point direction = new Point(0, 0);
         for (Cell cell : nearby_cells) {
             Point p = cell.getPosition();
             double r = cell.getDiameter() * 0.5 + radius;
             double d = position.distance(p);
-            double dx = p.x - position.x, dy = p.y - position.y;
-            if (Math.abs(dx) > Math.abs(p.x + size - position.x)) dx = p.x + size - position.x;
-            if (Math.abs(dx) > Math.abs(p.x - size - position.x)) dx = p.x + size - position.x;
-            if (Math.abs(dy) > Math.abs(p.y + size - position.x)) dy = p.y + size - position.y;
-            if (Math.abs(dy) > Math.abs(p.y - size - position.x)) dy = p.y - size - position.y;
-            if (Math.abs(d) < 1e-7) continue;
-            dx /= d; dy /= d; 
-            double amp = Math.asin(Math.min(1, r / d));
-            dx *= amp; dy *= amp;
 
-            acc_x -= dx; acc_y -= dy;
+            Point dir = correctedSubtract(p, position);
+
+            dir = normalize(dir);
+            if (Math.abs(d) > 1e-7)
+                dir = multiply(dir, weight(d, r));
+
+            direction = add(direction, multiply(dir, -1));
         }
         for (Pherome pherome : nearby_pheromes) {
             Point p = pherome.getPosition();
             double r = radius;
             double d = position.distance(p);
-            double dx = p.x - position.x, dy = p.y - position.y;
-            if (Math.abs(dx) > Math.abs(p.x + size - position.x)) dx = p.x + size - position.x;
-            if (Math.abs(dx) > Math.abs(p.x - size - position.x)) dx = p.x + size - position.x;
-            if (Math.abs(dy) > Math.abs(p.y + size - position.x)) dy = p.y + size - position.y;
-            if (Math.abs(dy) > Math.abs(p.y - size - position.x)) dy = p.y - size - position.y;
-            if (Math.abs(d) < 1e-7) continue;
-            dx /= d; dy /= d;
+            
+            Point dir = correctedSubtract(p, position);
 
-            double amp = Math.asin(Math.min(1, r / d));
-            dx *= amp; dy *= amp;
+            dir = normalize(dir);
+            if (Math.abs(d) > 1e-7)
+                dir = multiply(dir, weight(d, r));
 
-            acc_x -= dx; acc_y -= dy;
+            direction = add(direction, multiply(dir, -1));
         }
-
-        //System.out.println(nearby_cells.size());
-        //System.out.println(nearby_pheromes.size());
-
-        //if (width > 0) 
-        if (Math.abs(acc_x) < 1e-7 && Math.abs(acc_y) < 1e-7) {
-        	double angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
-        	acc_x = Math.cos(angle);
-        	acc_y = Math.sin(angle);
+        if (direction.norm() < 1e-8) {
+            double angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
+            //double angle = 0;
+            direction = new Point(Math.cos(angle), Math.sin(angle));
         }
-        double t = Math.hypot(acc_x, acc_y);
-        return new Move(new Point(acc_x / t, acc_y / t), (byte)0);
-        // Choose an arbitrary direction
-        //return new Move(new Point(1,0), (byte)0);
+        direction = normalize(direction);
+        return new Move(direction, (byte)0);
+    }
+
+
+    private static double logGamma(double x) {
+      double tmp = (x - 0.5) * Math.log(x + 4.5) - (x + 4.5);
+      double ser = 1.0 + 76.18009173    / (x + 0)   - 86.50532033    / (x + 1)
+                       + 24.01409822    / (x + 2)   -  1.231739516   / (x + 3)
+                       +  0.00120858003 / (x + 4)   -  0.00000536382 / (x + 5);
+      return tmp + Math.log(ser * Math.sqrt(2 * Math.PI));
+   }
+   private static double gamma(double x) { return Math.exp(logGamma(x)); }
+
+    private double weight(double dist, double r) {
+        final double lambda = 4;
+
+        return Math.pow(lambda, dist) * Math.exp(-lambda) / gamma(dist);
+    }
+
+    private Point add(Point a, Point b) {
+        return new Point(a.x + b.x, a.y + b.y);
+    }
+
+    private Point subtract(Point a, Point b) {
+        return new Point(a.x - b.x, a.y - b.y);
+    }
+
+    private Point correctedSubtract(Point a, Point b) {
+        double x = a.x - b.x, y = a.y - b.y;
+        if (Math.abs(x) > Math.abs(a.x + size - b.x)) x = a.x + size - b.x;
+        if (Math.abs(x) > Math.abs(a.x - size - b.x)) x = a.x + size - b.x;
+        if (Math.abs(y) > Math.abs(a.y + size - b.x)) y = a.y + size - b.y;
+        if (Math.abs(y) > Math.abs(a.y - size - b.x)) y = a.y - size - b.y;
+        return new Point(x, y);
+    }
+
+    private Point multiply(Point a, double d) {
+        return new Point(a.x * d, a.y * d);
+    }
+
+    private Point normalize(Point a) {
+        if (a.norm() < 1e-7) return a;
+        else return multiply(a, 1.0/a.norm());
     }
 
     // check if moving player_cell by vector collides with any nearby cell or hostile pherome

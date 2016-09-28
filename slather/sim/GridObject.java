@@ -8,24 +8,24 @@ public abstract class GridObject {
 
 
     protected GridObject(Point position, int player) {
-        this.position = position;
-        this.player = player;
+	this.position = position;
+	this.player = player;
     }
-
+    
     protected double distance(GridObject other) {
-        if (other instanceof Pherome)
-            return position.distance(other.getPosition());
-        else if (other instanceof Cell) {
-            Cell casted = (Cell) other;
-            return position.distance(other.getPosition()) - casted.getDiameter()/2;
-        }
-        else {
-            return 0;
-        }
+	if (other instanceof Pherome)
+	    return position.distance(other.getPosition());
+	else if (other instanceof Cell) {
+	    Cell casted = (Cell) other;
+	    return position.distance(other.getPosition()) - casted.getDiameter()/2;
+	}
+	else {
+	    return 0;
+	}
     }
 
     public Point getPosition() {
-        return position;
+	return position;
     }
-
+    
 }
