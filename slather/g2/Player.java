@@ -6,6 +6,8 @@ import slather.sim.Move;
 import slather.sim.Pherome;
 import java.util.*;
 
+import slather.util.Vector;
+
 public class Player implements slather.sim.Player {
 
     private Random gen;
@@ -30,7 +32,7 @@ public class Player implements slather.sim.Player {
         double theta = byte2angle( memory );
         double nextTheta = normalizeAngle(theta + dTheta,0);
         byte nextMemory = 0;
-        Point vector = null;
+        Vector vector = null;
         // Try to go any of four normal directions.
         for(int i=0; i<4; ++i) {
             nextMemory = angle2byte( nextTheta, memory );
@@ -42,7 +44,7 @@ public class Player implements slather.sim.Player {
         }
 
         // if all tries fail, just chill in place
-        return new Move(new Point(0,0), (byte)1);
+        return new Move(new Vector(0,0), (byte)1);
     }
 
     //return true if there are more than one nearby friendly cell
@@ -79,9 +81,9 @@ public class Player implements slather.sim.Player {
     }
 
     // check if moving player_cell by vector collides with any nearby cell or hostile pherome
-    private boolean collides(Cell player_cell, Point vector, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+    private boolean collides(Cell player_cell, Vector vector, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         Iterator<Cell> cell_it = nearby_cells.iterator();
-        Point destination = player_cell.getPosition().move(vector);
+        Vector destination = new Vector( player_cell.getPosition().move(vector.getPoint()) );
         while (cell_it.hasNext()) {
             Cell other = cell_it.next();
             if ( destination.distance(other.getPosition()) < 0.5*player_cell.getDiameter() + 0.5*other.getDiameter() + 0.00011) 
@@ -140,18 +142,18 @@ public class Player implements slather.sim.Player {
         }
     }
 
-    private Point angle2vector(double a) {
+    private Vector angle2vector(double a) {
         double dx = Cell.move_dist * Math.cos(a);
         double dy = Cell.move_dist * Math.sin(a);
-        return new Point(dx, dy);
+        return new Vector(dx, dy);
     }
 
     // convert an angle (in 2-deg increments) to a vector with magnitude Cell.move_dist (max allowed movement distance)
-    private Point extractVectorFromAngle(int arg) {
+    private Vector extractVectorFromAngle(int arg) {
         double theta = Math.toRadians( 2* (double)arg );
         double dx = Cell.move_dist * Math.cos(theta + dTheta);
         double dy = Cell.move_dist * Math.sin(theta + dTheta);
-        return new Point(dx, dy);
+        return new Vector(dx, dy);
     }
 
 
@@ -159,15 +161,15 @@ public class Player implements slather.sim.Player {
         System.out.println("play scout");
         if (player_cell.getDiameter() >= 2) // reproduce whenever possible
             return new Move(true, (byte)-1, (byte)-1);
-        Point position = player_cell.getPosition();
+        Vector position = new Vector(player_cell.getPosition());
         double radius = player_cell.getDiameter() * 0.5;
-        Point direction = new Point(0, 0);
+        Vector direction = new Vector(0, 0);
         for (Cell cell : nearby_cells) {
-            Point p = cell.getPosition();
+            Vector p = new Vector(cell.getPosition());
             double r = cell.getDiameter() * 0.5 + radius;
             double d = position.distance(p);
 
-            Point dir = correctedSubtract(p, position);
+            Vector dir = correctedSubtract(p, position);
 
             dir = normalize(dir);
             if (Math.abs(d) > 1e-7)
@@ -176,11 +178,11 @@ public class Player implements slather.sim.Player {
             direction = add(direction, multiply(dir, -1));
         }
         for (Pherome pherome : nearby_pheromes) {
-            Point p = pherome.getPosition();
+            Vector p = new Vector(pherome.getPosition());
             double r = radius;
             double d = position.distance(p);
             
-            Point dir = correctedSubtract(p, position);
+            Vector dir = correctedSubtract(p, position);
 
             dir = normalize(dir);
             if (Math.abs(d) > 1e-7)
@@ -191,23 +193,22 @@ public class Player implements slather.sim.Player {
         if (direction.norm() < 1e-8) {
             double angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
             //double angle = 0;
-            direction = new Point(Math.cos(angle), Math.sin(angle));
+            direction = new Vector(Math.cos(angle), Math.sin(angle));
         }
         direction = normalize(direction);
         return new Move(direction, (byte)0);
     }
 
-
     public Move playG1(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
 
-        Point self_pos = player_cell.getPosition();
-        Point other_pos = null;
-        Point difference = null;
+        Vector self_pos = new Vector(player_cell.getPosition());
+        Vector other_pos = null;
+        Vector difference = null;
         final float MIN_DISTANCE = tailLength;
-        List<Point> differences = new ArrayList<Point>();
+        List<Vector> differences = new ArrayList<Vector>();
 
         for(Cell other : nearby_cells) {
-            other_pos = other.getPosition();
+            other_pos = new Vector(other.getPosition());
             // difference = getDistance(other_pos, self_pos);
             difference = correctedSubtract(other_pos, self_pos);
             if( Math.hypot( difference.x, difference.y ) <= MIN_DISTANCE ) {
@@ -215,8 +216,8 @@ public class Player implements slather.sim.Player {
             }
         }
 
-        difference = new Point(0,0);
-        for(Point p : differences) {
+        difference = new Vector(0,0);
+        for(Vector p : differences) {
             difference = vectorAdd(difference, p);
         }
 
@@ -247,44 +248,49 @@ public class Player implements slather.sim.Player {
         return Math.pow(lambda, dist) * Math.exp(-lambda) / gamma(dist);
     }
 
-    private Point add(Point a, Point b) {
-        return new Point(a.x + b.x, a.y + b.y);
+    @Deprecated
+    private Vector add(Vector a, Vector b) {
+        return new Vector(a.x + b.x, a.y + b.y);
     }
 
-    private Point subtract(Point a, Point b) {
-        return new Point(a.x - b.x, a.y - b.y);
+    @Deprecated
+    private Vector subtract(Vector a, Vector b) {
+        return new Vector(a.x - b.x, a.y - b.y);
     }
 
-    private Point correctedSubtract(Point a, Point b) {
-        double x = a.x - b.x, y = a.y - b.y;
-        if (Math.abs(x) > Math.abs(a.x + size - b.x)) x = a.x + size - b.x;
-        if (Math.abs(x) > Math.abs(a.x - size - b.x)) x = a.x + size - b.x;
-        if (Math.abs(y) > Math.abs(a.y + size - b.x)) y = a.y + size - b.y;
-        if (Math.abs(y) > Math.abs(a.y - size - b.x)) y = a.y - size - b.y;
-        return new Point(x, y);
+    @Deprecated
+    private Vector correctedSubtract(Vector a, Vector b) {
+        return a.getTaurusDistance(b, size  );
     }
 
-    private Point multiply(Point a, double d) {
-        return new Point(a.x * d, a.y * d);
+    @Deprecated
+    private Vector multiply(Vector a, double d) {
+        return new Vector(a.x * d, a.y * d);
     }
 
-    private Point normalize(Point a) {
+    @Deprecated
+    private Vector normalize(Vector a) {
         if (a.norm() < 1e-7) return a;
         else return multiply(a, 1.0/a.norm());
     }
-    private double vectorLength(Point p) {
+
+    @Deprecated
+    private double vectorLength(Vector p) {
         return Math.hypot(p.x, p.y);
     }
 
-    private Point scalarMult(Point a, double t) {
-        return new Point(a.x*t, a.y*t);
+    @Deprecated
+    private Vector scalarMult(Vector a, double t) {
+        return new Vector(a.x*t, a.y*t);
     }
 
-    private Point vectorAdd(Point a, Point b) {
-        return new Point(a.x+b.x, a.y+b.y);
+    @Deprecated
+    private Vector vectorAdd(Vector a, Vector b) {
+        return new Vector(a.x+b.x, a.y+b.y);
     }
 
-    private Point unitVector(Point a) {
+    @Deprecated
+    private Vector unitVector(Vector a) {
         double t = vectorLength(a);
         return scalarMult(a, 1/t);
     }
