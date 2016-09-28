@@ -1,4 +1,4 @@
-package slather.g23;
+package slather.poisson0;
 
 import slather.sim.Cell;
 import slather.sim.Point;
@@ -76,7 +76,7 @@ public class Player implements slather.sim.Player {
    private static double gamma(double x) { return Math.exp(logGamma(x)); }
 
     private double weight(double dist, double r) {
-        final double lambda = 4;
+        final double lambda = 2 * r;
 
         return Math.pow(lambda, dist) * Math.exp(-lambda) / gamma(dist);
     }

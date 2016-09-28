@@ -1,4 +1,4 @@
-package slather.g23;
+package slather.cl3;
 
 import slather.sim.Cell;
 import slather.sim.Point;
@@ -7,12 +7,12 @@ import slather.sim.Pherome;
 import java.util.*;
 import java.lang.*;
 
-// Weight: 1 / distance^2
+// Weight: 1 / distance
 
 
 public class Player implements slather.sim.Player {
 
-    private final double size = 100;
+	private final double size = 100;
 
     private Random gen;
     private double vision;
@@ -39,7 +39,7 @@ public class Player implements slather.sim.Player {
 
             dir = normalize(dir);
             if (Math.abs(d) > 1e-7)
-                dir = multiply(dir, weight(d, r));
+                dir = multiply(dir, 1.0 / d);
 
             direction = add(direction, multiply(dir, -1));
         }
@@ -52,33 +52,17 @@ public class Player implements slather.sim.Player {
 
             dir = normalize(dir);
             if (Math.abs(d) > 1e-7)
-                dir = multiply(dir, weight(d, r));
+                dir = multiply(dir, 1.0 / d);
 
             direction = add(direction, multiply(dir, -1));
         }
         if (direction.norm() < 1e-8) {
-            double angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
+        	double angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
             //double angle = 0;
             direction = new Point(Math.cos(angle), Math.sin(angle));
         }
         direction = normalize(direction);
         return new Move(direction, (byte)0);
-    }
-
-
-    private static double logGamma(double x) {
-      double tmp = (x - 0.5) * Math.log(x + 4.5) - (x + 4.5);
-      double ser = 1.0 + 76.18009173    / (x + 0)   - 86.50532033    / (x + 1)
-                       + 24.01409822    / (x + 2)   -  1.231739516   / (x + 3)
-                       +  0.00120858003 / (x + 4)   -  0.00000536382 / (x + 5);
-      return tmp + Math.log(ser * Math.sqrt(2 * Math.PI));
-   }
-   private static double gamma(double x) { return Math.exp(logGamma(x)); }
-
-    private double weight(double dist, double r) {
-        final double lambda = 4;
-
-        return Math.pow(lambda, dist) * Math.exp(-lambda) / gamma(dist);
     }
 
     private Point add(Point a, Point b) {
