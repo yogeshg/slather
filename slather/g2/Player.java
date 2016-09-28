@@ -9,6 +9,7 @@ import java.util.*;
 public class Player implements slather.sim.Player {
 
     private Random gen;
+    private double vision;
     private int tailLength;
     private double radius;
     private double dTheta;
@@ -17,6 +18,7 @@ public class Player implements slather.sim.Player {
 
     public void init(double d, int t, int side_length) {
         gen = new Random(System.currentTimeMillis());
+        vision = d;
         tailLength = t;
         radius = 2 * tailLength / (2*Math.PI);
         dTheta = 1 / radius;
@@ -73,7 +75,7 @@ public class Player implements slather.sim.Player {
         if(crowded(player_cell,nearby_cells)) nextCircle = true;
         if(!nextCircle) 
             return playScout(player_cell, memory, nearby_cells, nearby_pheromes);
-        return playCircle(player_cell, memory, nearby_cells, nearby_pheromes);
+        return playG1(player_cell, memory, nearby_cells, nearby_pheromes);
     }
 
     // check if moving player_cell by vector collides with any nearby cell or hostile pherome
@@ -196,6 +198,40 @@ public class Player implements slather.sim.Player {
     }
 
 
+    public Move playG1(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+
+        Point self_pos = player_cell.getPosition();
+        Point other_pos = null;
+        Point difference = null;
+        final float MIN_DISTANCE = tailLength;
+        List<Point> differences = new ArrayList<Point>();
+
+        for(Cell other : nearby_cells) {
+            other_pos = other.getPosition();
+            // difference = getDistance(other_pos, self_pos);
+            difference = correctedSubtract(other_pos, self_pos);
+            if( Math.hypot( difference.x, difference.y ) <= MIN_DISTANCE ) {
+                differences.add( difference );
+            }
+        }
+
+        difference = new Point(0,0);
+        for(Point p : differences) {
+            difference = vectorAdd(difference, p);
+        }
+
+        difference = scalarMult(difference, -1);
+
+        if( vectorLength(difference) < 0.001 ) {
+            return playCircle(player_cell, memory, nearby_cells, nearby_pheromes);
+        } else {
+            difference = unitVector( difference );
+            return new Move(difference, memory);
+        }
+
+    }
+
+
     private static double logGamma(double x) {
       double tmp = (x - 0.5) * Math.log(x + 4.5) - (x + 4.5);
       double ser = 1.0 + 76.18009173    / (x + 0)   - 86.50532033    / (x + 1)
@@ -235,6 +271,22 @@ public class Player implements slather.sim.Player {
     private Point normalize(Point a) {
         if (a.norm() < 1e-7) return a;
         else return multiply(a, 1.0/a.norm());
+    }
+    private double vectorLength(Point p) {
+        return Math.hypot(p.x, p.y);
+    }
+
+    private Point scalarMult(Point a, double t) {
+        return new Point(a.x*t, a.y*t);
+    }
+
+    private Point vectorAdd(Point a, Point b) {
+        return new Point(a.x+b.x, a.y+b.y);
+    }
+
+    private Point unitVector(Point a) {
+        double t = vectorLength(a);
+        return scalarMult(a, 1/t);
     }
 
 }

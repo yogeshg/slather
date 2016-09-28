@@ -19,12 +19,13 @@ public class Player implements slather.sim.Player {
     private final double PROB_CIRCLE = 0.5;
     private final double RANDOM_STEP_SIZE = 0.75;
 
-    public void init(double d, int t) {
+    public void init(double d, int t, int side_length) {
         gen = new Random(System.currentTimeMillis());
         vision = d;
         tailLength = t;
         radius = 2 * tailLength / (2*Math.PI);
         dTheta = 1 / radius;
+        size = side_length;
     }
 
     // PURE STRATEGIES
@@ -244,10 +245,6 @@ public class Player implements slather.sim.Player {
 
     }
 
-    private double vectorLength(Point p) {
-        return Math.hypot(p.x, p.y);
-    }
-
     private Point toRight(Point dir) {
         if( dir.x < 0 ) {
             return new Point(-dir.x, -dir.y);
@@ -294,15 +291,15 @@ public class Player implements slather.sim.Player {
         }
     }
 
+
     private Point angle2vector(double a) {
         double dx = Cell.move_dist * Math.cos(a);
         double dy = Cell.move_dist * Math.sin(a);
         return new Point(dx, dy);
     }
 
-    private Point unitVector(Point a) {
-        double t = Math.hypot(a.x, a.y);
-        return scalarMult(a, 1/t);
+    private double vectorLength(Point p) {
+        return Math.hypot(p.x, p.y);
     }
 
     private Point scalarMult(Point a, double t) {
@@ -311,6 +308,11 @@ public class Player implements slather.sim.Player {
 
     private Point vectorAdd(Point a, Point b) {
         return new Point(a.x+b.x, a.y+b.y);
+    }
+
+    private Point unitVector(Point a) {
+        double t = vectorLength(a);
+        return scalarMult(a, 1/t);
     }
 
     // convert an angle (in 2-deg increments) to a vector with magnitude Cell.move_dist (max allowed movement distance)
