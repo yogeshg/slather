@@ -5,7 +5,7 @@
  * [Files] (https://courseworks2.columbia.edu/courses/10838/files)
 
 ## commands
-    javac slather/g0/Player.java
+    javac slather/g2/Player.java
     javac slather/sim/Simulator.java
     java slather.sim.Simulator --gui --fps 10
 
