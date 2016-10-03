@@ -18,8 +18,8 @@ public class Player implements slather.sim.Player {
     protected double PROB_CIRCLE = 0;
 
     private Chiller chiller = null;
-    private Chiller occupier = null;
-    private Chiller scout = null;
+    private Circler occupier = null;
+    private Circler scout = null;
 
     // Initialize here, initialize sub strategies here.
     // Take care to initialize VISION, TAIL_LENGTH, BOARD_SIZE, RANDOM_GENERATOR in your subclass
@@ -36,10 +36,10 @@ public class Player implements slather.sim.Player {
         chiller = new Chiller();
         chiller.init(d, t, side_length);
 
-        occupier = new Chiller();
+        occupier = new Circler();
         occupier.init(d, t, side_length);
 
-        scout = new Chiller();
+        scout = new Circler();
         scout.init(d, t, side_length);
     }
 
@@ -64,7 +64,7 @@ public class Player implements slather.sim.Player {
     }
 
     // check if moving player_cell by vector collides with any nearby cell or hostile pherome
-    private boolean collides(Cell player_cell, Vector vector, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+    protected boolean collides(Cell player_cell, Vector vector, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         Iterator<Cell> cell_it = nearby_cells.iterator();
         Vector destination = new Vector( player_cell.getPosition().move(vector.getPoint()) );
         while (cell_it.hasNext()) {
@@ -81,17 +81,17 @@ public class Player implements slather.sim.Player {
         return false;
     }
 
-    private static final int ANGLE_BITS = 5;
-    private static final int ANGLE_MIN = 0;
-    private static final int ANGLE_MAX = 1 << ANGLE_BITS;
-    private static final int ANGLE_MASK = ANGLE_MAX - 1;
+    protected static final int ANGLE_BITS = 5;
+    protected static final int ANGLE_MIN = 0;
+    protected static final int ANGLE_MAX = 1 << ANGLE_BITS;
+    protected static final int ANGLE_MASK = ANGLE_MAX - 1;
 
-    private static final int ROLE_BITS = 1;
-    private static final int ROLE_MIN = ANGLE_MAX;
-    private static final int ROLE_MAX = ROLE_MIN + ( 1<<ROLE_BITS );
-    private static final int ROLE_MASK = (ROLE_MAX - 1) & ~ANGLE_MASK;
-    private static final int ROLE_SCOUT = 0 << ANGLE_BITS;
-    private static final int ROLE_CIRCLE = 1 << ANGLE_BITS;
+    protected static final int ROLE_BITS = 1;
+    protected static final int ROLE_MIN = ANGLE_MAX;
+    protected static final int ROLE_MAX = ROLE_MIN + ( 1<<ROLE_BITS );
+    protected static final int ROLE_MASK = (ROLE_MAX - 1) & ~ANGLE_MASK;
+    protected static final int ROLE_SCOUT = 0 << ANGLE_BITS;
+    protected static final int ROLE_CIRCLE = 1 << ANGLE_BITS;
 
     private boolean byteIsCircle(byte b){
         //System.out.printf("%d %d %d\n",b,ROLE_MASK,ROLE_CIRCLE);
