@@ -13,10 +13,20 @@ public class Chiller extends Player {
 
     public void init(double d, int t, int side_length) {
         System.out.println("Chiller init");
+
+        this.RANDOM_GENERATOR = new Random(System.currentTimeMillis());
+        this.VISION = d;
+        this.TAIL_LENGTH = t;
+        this.BOARD_SIZE = side_length;
+
     }
 
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         return new Move(new Point(0,0), memory);
+    }
+
+    public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+        return new Move(true, memory, memory);
     }
 
 }
