@@ -18,7 +18,7 @@ import slather.sim.Point;
 
 import slather.sim.Move;
 import slather.sim.Pherome;
-import slather.util.Vector;
+import slather.g2.util.Vector;
 import java.util.*;
 import java.lang.*;
 
@@ -225,7 +225,7 @@ public class Scout extends Player {
     }
 
     public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-        System.out.println("Scout reproduce");
+        // System.out.println("Scout reproduce");
         return new Move(true, memory, memory);
     }
 

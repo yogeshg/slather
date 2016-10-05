@@ -1,4 +1,4 @@
-package slather.util;
+package slather.g2.util;
 
 import slather.sim.Point;
 

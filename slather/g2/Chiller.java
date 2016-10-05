@@ -6,7 +6,7 @@ import slather.sim.Move;
 import slather.sim.Pherome;
 import java.util.*;
 
-import slather.util.Vector;
+import slather.g2.util.Vector;
 
 
 public class Chiller extends Player {

@@ -1,4 +1,4 @@
-package slather.util;
+package slather.g2.util;
 
 public class MinAndArgMin<ArgType> {
     public float min = Float.MAX_VALUE;

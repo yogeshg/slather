@@ -6,7 +6,7 @@ import slather.sim.Move;
 import slather.sim.Pherome;
 import java.util.*;
 
-import slather.util.Vector;
+import slather.g2.util.Vector;
 
 
 public class Circler extends Chiller {
@@ -47,7 +47,7 @@ public class Circler extends Chiller {
     }
 
     public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-        System.out.println("Circler reproduce");
+        // System.out.println("Circler reproduce");
         return new Move(true, (byte)(memory|ROLE_CIRCLE), memory);
     }
 
