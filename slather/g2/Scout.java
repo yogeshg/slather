@@ -67,18 +67,23 @@ public class Scout extends Player {
         if (player_cell.getDiameter() >= 2) // reproduce whenever possible
             return new Move(true, (byte)-1, (byte)-1);
 
+        double threshold = player_cell.getDiameter() * 0.5 + 3;
+
         Set<Pherome> pheromes = new HashSet<Pherome>();
         for (Pherome pherome : nearby_pheromes)
-            if (pherome.player != player_cell.player)
+            if (pherome.player != player_cell.player && pherome.getPosition().distance(player_cell.getPosition()) <= threshold)
                 pheromes.add(pherome);
         Set<Cell> cells = new HashSet<Cell>();
         for (Cell cell : nearby_cells)
-            if (cell.player == player_cell.player)
+            //if (cell.player == player_cell.player)
+            if (cell.getPosition().distance(player_cell.getPosition()) <= threshold)
                 cells.add(cell);
-        double angle = findTheLargestAngle(player_cell, nearby_cells, pheromes);
+
+        double angle = findTheLargestAngle(player_cell, cells, pheromes);
         Point next = new Point(Math.cos(angle), Math.sin(angle));
 
-        double vision = this.VISION;
+        //double vision = this.VISION;
+        double vision = threshold;
         while (angle > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
             vision *= 0.9;
             cells.clear();
@@ -87,7 +92,7 @@ public class Scout extends Player {
                     cells.add(cell);
             pheromes.clear();
             for (Pherome pherome : nearby_pheromes)
-                if (pherome.getPosition().distance(player_cell.getPosition()) <= vision)
+                if (pherome.player != player_cell.player && pherome.getPosition().distance(player_cell.getPosition()) <= vision)
                     pheromes.add(pherome);
             angle = findTheLargestAngle(player_cell, cells, pheromes);
             next = new Point(Math.cos(angle), Math.sin(angle));
@@ -98,6 +103,16 @@ public class Scout extends Player {
             }
         }
         if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+
+            pheromes.clear();
+            cells.clear();
+            for (Pherome pherome : nearby_pheromes)
+                if (pherome.player != player_cell.player && pherome.getPosition().distance(player_cell.getPosition()) <= threshold)
+                    pheromes.add(pherome);
+            //Set<Cell> cells = new HashSet<Cell>();
+            for (Cell cell : nearby_cells)
+                if (cell.player == player_cell.player || cell.getPosition().distance(player_cell.getPosition()) <= threshold)
+                    cells.add(cell);
             angle = findTheLargestAngle(player_cell, cells, pheromes);
             next = new Point(Math.cos(angle), Math.sin(angle));
         }

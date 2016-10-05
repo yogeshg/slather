@@ -33,6 +33,8 @@ public class Player implements slather.sim.Player {
         this.TAIL_LENGTH = t;
         this.BOARD_SIZE = side_length;
 
+        if (t <= 4) PROB_CIRCLE = 0;
+
         chiller = new Chiller();
         chiller.init(d, t, side_length);
 
