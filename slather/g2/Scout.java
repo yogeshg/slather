@@ -181,11 +181,11 @@ public class Scout extends Player {
             // No angle available
         }
 
-        System.out.print(events.size());
-        for (Event event: events)
-            System.out.print(" (" + event.value + "," + event.index + ")");
-        System.out.println();
-        System.out.println("width: " + width + ", angle: " + result);
+        // System.out.print(events.size());
+        // for (Event event: events)
+        //     System.out.print(" (" + event.value + "," + event.index + ")");
+        // System.out.println();
+        // System.out.println("width: " + width + ", angle: " + result);
         return result;
     }
 

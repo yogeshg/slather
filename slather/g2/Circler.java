@@ -22,7 +22,7 @@ public class Circler extends Chiller {
         this.TAIL_LENGTH = t;
         this.BOARD_SIZE = side_length;
 
-        RADIUS = 2.0 * t / (2*Math.PI);
+        RADIUS = 1.0 * t / (2*Math.PI);
         DELTA_THETA = 1 / RADIUS;
 
     }
@@ -48,7 +48,7 @@ public class Circler extends Chiller {
 
     public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         System.out.println("Circler reproduce");
-        return new Move(true, memory, memory);
+        return new Move(true, (byte)(memory|ROLE_CIRCLE), memory);
     }
 
     private static final double TWOPI = 2*Math.PI;

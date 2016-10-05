@@ -282,7 +282,7 @@ public class Player implements slather.sim.Player {
     }
     //of first to second
     private Point getClosestDirection(Point first, Point second) {
-    	System.out.println(first.x +" " + first.y +" " + second.x +" "+ second.y);
+    	// System.out.println(first.x +" " + first.y +" " + second.x +" "+ second.y);
     	double x = second.x;
     	double y = second.y;
     	double dist = 100;
@@ -298,7 +298,7 @@ public class Player implements slather.sim.Player {
     			}
     		}
     	}
-		if(best == null) System.out.println("best null");
+		// if(best == null) System.out.println("best null");
     	return getUnitVector(best);
     }
     

@@ -15,7 +15,7 @@ public class Player implements slather.sim.Player {
     protected int TAIL_LENGTH;
     protected double BOARD_SIZE;
 
-    protected double PROB_CIRCLE = 0;
+    protected double PROB_CIRCLE = 0.2;
 
     private Chiller chiller = null;
     private Circler occupier = null;
@@ -43,27 +43,45 @@ public class Player implements slather.sim.Player {
         scout.init(d, t, side_length);
     }
 
+    public String move2String(Move m) {
+        return
+        "Move(" +m.reproduce
+            +","+m.vector.x
+            +","+m.vector.y
+            +","+String.format("%8s", Integer.toBinaryString(m.memory & 0xFF)).replace(' ', '0')
+            +","+String.format("%8s", Integer.toBinaryString(m.daughter_memory & 0xFF)).replace(' ', '0')
+            +")";
+    }
+
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         // reproduce whenever possible
+        Move m;
         if (player_cell.getDiameter() >= 2){
-            if(!byteIsCircle(memory) && (RANDOM_GENERATOR.nextDouble() < PROB_CIRCLE)) {
-                return occupier.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+            final double randomNumber = RANDOM_GENERATOR.nextDouble();
+            if(!byteIsCircle(memory) &&  (randomNumber< PROB_CIRCLE)) {
+                m = occupier.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
             } else {
-                return scout.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                m = scout.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+            }
+        } else {
+            boolean nextIsCircle = byteIsCircle(memory);
+            // nextIsCircle = false;
+            // if(scout.crowded(player_cell,nearby_cells)){
+            //     nextIsCircle = true;
+            // }
+            if(nextIsCircle){
+                // System.out.println("nextIsCircle");
+            }
+            if(!nextIsCircle) {
+                m = scout.play(player_cell, memory, nearby_cells, nearby_pheromes);
+            } else {
+                m = occupier.play(player_cell, memory, nearby_cells, nearby_pheromes);
             }
         }
-        boolean nextIsCircle = byteIsCircle(memory);
-        // if(scout.crowded(player_cell,nearby_cells)){
-        //     nextIsCircle = true;
-        // }
-        if(nextIsCircle){
-            System.out.println("nextIsCircle");
-        }
-        if(!nextIsCircle) {
-            return scout.play(player_cell, memory, nearby_cells, nearby_pheromes);
-        } else {
-            return occupier.play(player_cell, memory, nearby_cells, nearby_pheromes);
-        }
+
+        // System.out.println(move2String(m));
+
+        return m;
     }
 
     // check if moving player_cell by vector collides with any nearby cell or hostile pherome
