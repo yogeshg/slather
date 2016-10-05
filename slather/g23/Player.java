@@ -40,19 +40,23 @@ public class Player implements slather.sim.Player {
 
 		double vision = this.vision;
 		while (angle > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
-			vision *= 0.8;
+			vision *= 0.9;
 			for (Cell cell : nearby_cells)
 				if (cell.getPosition().distance(player_cell.getPosition()) <= vision)
 					cells.add(cell);
 			angle = findTheLargestAngle(player_cell, cells, pheromes);
 			next = new Point(Math.cos(angle), Math.sin(angle));
 			if (vision < 1 || angle < -Math.PI - 1) {
-				angle = (double)memory * 2.0 * Math.PI / 128;
-				next = new Point(Math.cos(angle), Math.sin(angle));
+		//		angle = (double)memory * 2.0 * Math.PI / 128;
+		//		next = new Point(Math.cos(angle), Math.sin(angle));
 				break;
 			}
 		}
-		if (collides(player_cell, next, nearby_cells, nearby_pheromes)) {
+		if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
+			angle = (double)memory * 2.0 * Math.PI / 128;
+			next = new Point(Math.cos(angle), Math.sin(angle));
+		}
+		if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
 			angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
 			next = new Point(Math.cos(angle), Math.sin(angle));
 		}
@@ -154,11 +158,11 @@ public class Player implements slather.sim.Player {
 			// No angle available
 		}
 
-		/*System.out.print(events.size());
+		System.out.print(events.size());
 		for (Event event: events)
 			System.out.print(" (" + event.value + "," + event.index + ")");
 		System.out.println();
-		System.out.println("width: " + width + ", angle: " + result);*/
+		System.out.println("width: " + width + ", angle: " + result);
 		return result;
 	}
 
