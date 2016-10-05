@@ -35,6 +35,23 @@ public class Scout extends Player {
         this.VISION = d;
     }
 
+    private static final double TWOPI = 2*Math.PI;
+
+    private double byte2angle(byte b) {
+        // -128 <= b < 128
+        // -1 <= b/128 < 1
+        // -pi <= a < pi
+        return normalizeAngle(TWOPI * (((double) ((b) & this.ANGLE_MASK) ) / this.ANGLE_MAX), 0);
+    }
+
+    private byte angle2byte(double a, byte b) {
+        final double actualAngle = ((normalizeAngle(a,0) / TWOPI)*this.ANGLE_MAX);
+        final int anglePart = (int) (((int)actualAngle) & this.ANGLE_MASK);
+        final byte memoryPart = (byte) ( b & ~this.ANGLE_MASK);
+        // System.out.println("angle2byte "+ memoryPart +","+ anglePart +","+ (normalizeAngle(a,0)/TWOPI) +","+ this.ANGLE_MAX +","+ a);
+        return (byte) ((anglePart | memoryPart));
+    }
+
     @Override
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         if (player_cell.getDiameter() >= 2) // reproduce whenever possible
@@ -80,10 +97,15 @@ public class Scout extends Player {
             next = new Point(Math.cos(angle), Math.sin(angle));
         }
         if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+            angle = byte2angle(memory);
+            next = new Point(Math.cos(angle), Math.sin(angle));
+        }
+        if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
             angle = RANDOM_GENERATOR.nextDouble() * 2 * Math.PI - Math.PI;
             next = new Point(Math.cos(angle), Math.sin(angle));
         }
         //int mem = (int) (angle / 2.0 / Math.PI * 128);
+        memory = angle2byte(angle, memory);
         return new Move(next, (byte) memory);
     }
 

@@ -67,11 +67,16 @@ public class Player implements slather.sim.Player {
 			next = new Point(Math.cos(angle), Math.sin(angle));
 		}
 		if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
+			angle = (double)memory * 2.0 * Math.PI / 128;
+			//angle = findTheLargestAngle(player_cell, nearby_cells, nearby_pheromes);
+			next = new Point(Math.cos(angle), Math.sin(angle));
+		}
+		if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
 			angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
 			next = new Point(Math.cos(angle), Math.sin(angle));
 		}
-		//int mem = (int) (angle / 2.0 / Math.PI * 128);
-		return new Move(next, (byte) memory);
+		int mem = (int) (angle / 2.0 / Math.PI * 128);
+		return new Move(next, (byte) mem);
     }
 
         private class Event implements Comparable<Event> {
