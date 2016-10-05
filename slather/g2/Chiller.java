@@ -26,6 +26,7 @@ public class Chiller extends Player {
     }
 
     public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+        System.out.println("Chiller reproduce");
         return new Move(true, memory, memory);
     }
 

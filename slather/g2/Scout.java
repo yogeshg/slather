@@ -1,9 +1,24 @@
 package slather.g2;
 
 import slather.sim.Cell;
+
+
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
 import slather.sim.Point;
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
+///////////////// DO NOT import tjis file please.
+
+
 import slather.sim.Move;
 import slather.sim.Pherome;
+import slather.util.Vector;
 import java.util.*;
 import java.lang.*;
 
@@ -13,15 +28,11 @@ import java.lang.*;
 
 public class Scout extends Player {
 
-    int size;
-    double vision;
-    private Random gen;
-
     @Override
     public void init(double d, int t, int size) {
-        gen = new Random();
-        this.size = size;
-        this.vision = d;
+        this.RANDOM_GENERATOR = new Random();
+        this.BOARD_SIZE = size;
+        this.VISION = d;
     }
 
     @Override
@@ -40,8 +51,8 @@ public class Scout extends Player {
         double angle = findTheLargestAngle(player_cell, nearby_cells, pheromes);
         Point next = new Point(Math.cos(angle), Math.sin(angle));
 
-        double vision = this.vision;
-        while (angle > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
+        double vision = this.VISION;
+        while (angle > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
             vision *= 0.9;
             cells.clear();
             for (Cell cell : nearby_cells)
@@ -59,16 +70,16 @@ public class Scout extends Player {
                 break;
             }
         }
-        if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
+        if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
             angle = findTheLargestAngle(player_cell, cells, pheromes);
             next = new Point(Math.cos(angle), Math.sin(angle));
         }
-        if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
+        if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
             angle = (double)memory * 2.0 * Math.PI / 128;
             next = new Point(Math.cos(angle), Math.sin(angle));
         }
-        if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
-            angle = gen.nextDouble() * 2 * Math.PI - Math.PI;
+        if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+            angle = RANDOM_GENERATOR.nextDouble() * 2 * Math.PI - Math.PI;
             next = new Point(Math.cos(angle), Math.sin(angle));
         }
         int mem = (int) (angle / 2.0 / Math.PI * 128);
@@ -187,10 +198,10 @@ public class Scout extends Player {
 
     private Point correctedSubtract(Point a, Point b) {
         double x = a.x - b.x, y = a.y - b.y;
-        if (Math.abs(x) > Math.abs(a.x + size - b.x)) x = a.x + size - b.x;
-        if (Math.abs(x) > Math.abs(a.x - size - b.x)) x = a.x - size - b.x;
-        if (Math.abs(y) > Math.abs(a.y + size - b.x)) y = a.y + size - b.y;
-        if (Math.abs(y) > Math.abs(a.y - size - b.x)) y = a.y - size - b.y;
+        if (Math.abs(x) > Math.abs(a.x + BOARD_SIZE - b.x)) x = a.x + BOARD_SIZE - b.x;
+        if (Math.abs(x) > Math.abs(a.x - BOARD_SIZE - b.x)) x = a.x - BOARD_SIZE - b.x;
+        if (Math.abs(y) > Math.abs(a.y + BOARD_SIZE - b.x)) y = a.y + BOARD_SIZE - b.y;
+        if (Math.abs(y) > Math.abs(a.y - BOARD_SIZE - b.x)) y = a.y - BOARD_SIZE - b.y;
 
         return new Point(x, y);
     }
@@ -204,26 +215,6 @@ public class Scout extends Player {
         else return multiply(a, 1.0/a.norm());
     }
 
-
-
-    // check if moving player_cell by vector collides with any nearby cell or hostile pherome
-    private boolean collides(Cell player_cell, Point vector, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-        Iterator<Cell> cell_it = nearby_cells.iterator();
-        Point destination = player_cell.getPosition().move(vector);
-        while (cell_it.hasNext()) {
-            Cell other = cell_it.next();
-            if ( destination.distance(other.getPosition()) < 0.5*player_cell.getDiameter() + 0.5*other.getDiameter() + 0.00011) 
-                return true;
-        }
-        Iterator<Pherome> pherome_it = nearby_pheromes.iterator();
-        while (pherome_it.hasNext()) {
-            Pherome other = pherome_it.next();
-            if (other.player != player_cell.player && destination.distance(other.getPosition()) < 0.5*player_cell.getDiameter() + 0.0001) 
-                return true;
-        }
-        return false;
-    }
-
     // convert an angle (in 2-deg increments) to a vector with magnitude Cell.move_dist (max allowed movement distance)
     private Point extractVectorFromAngle(int arg) {
         double theta = Math.toRadians( 2* (double)arg );
@@ -233,6 +224,7 @@ public class Scout extends Player {
     }
 
     public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+        System.out.println("Scout reproduce");
         return new Move(true, memory, memory);
     }
 

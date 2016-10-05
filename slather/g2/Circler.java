@@ -46,6 +46,10 @@ public class Circler extends Chiller {
         return new Move(new Point(0,0), memory);
     }
 
+    public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+        System.out.println("Circler reproduce");
+        return new Move(true, memory, memory);
+    }
 
     private static final double TWOPI = 2*Math.PI;
 

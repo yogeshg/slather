@@ -19,7 +19,7 @@ public class Player implements slather.sim.Player {
 
     private Chiller chiller = null;
     private Circler occupier = null;
-    private Circler scout = null;
+    private Scout scout = null;
 
     // Initialize here, initialize sub strategies here.
     // Take care to initialize VISION, TAIL_LENGTH, BOARD_SIZE, RANDOM_GENERATOR in your subclass
@@ -39,7 +39,7 @@ public class Player implements slather.sim.Player {
         occupier = new Circler();
         occupier.init(d, t, side_length);
 
-        scout = new Circler();
+        scout = new Scout();
         scout.init(d, t, side_length);
     }
 
@@ -56,6 +56,9 @@ public class Player implements slather.sim.Player {
         // if(scout.crowded(player_cell,nearby_cells)){
         //     nextIsCircle = true;
         // }
+        if(nextIsCircle){
+            System.out.println("nextIsCircle");
+        }
         if(!nextIsCircle) {
             return scout.play(player_cell, memory, nearby_cells, nearby_pheromes);
         } else {
