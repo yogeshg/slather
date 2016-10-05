@@ -37,6 +37,16 @@ public class Scout extends Player {
 
     private static final double TWOPI = 2*Math.PI;
 
+    private double normalizeAngle(double a, double start) {
+        if( a < start ) {
+            return normalizeAngle( a+TWOPI, start);
+        } else if (a >= (start+TWOPI)) {
+            return normalizeAngle( a-TWOPI, start);
+        } else {
+            return a;
+        }
+    }
+
     private double byte2angle(byte b) {
         // -128 <= b < 128
         // -1 <= b/128 < 1
