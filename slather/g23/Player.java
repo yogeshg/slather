@@ -1,4 +1,4 @@
-package slather.cl0;
+package slather.a1;
 
 import slather.sim.Cell;
 import slather.sim.Point;
@@ -41,9 +41,14 @@ public class Player implements slather.sim.Player {
 		double vision = this.vision;
 		while (angle > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
 			vision *= 0.9;
+			cells.clear();
 			for (Cell cell : nearby_cells)
 				if (cell.getPosition().distance(player_cell.getPosition()) <= vision)
 					cells.add(cell);
+			pheromes.clear();
+			for (Pherome pherome : nearby_pheromes)
+				if (pherome.getPosition().distance(player_cell.getPosition()) <= vision)
+					pheromes.add(pherome);
 			angle = findTheLargestAngle(player_cell, cells, pheromes);
 			next = new Point(Math.cos(angle), Math.sin(angle));
 			if (vision < 1 || angle < -Math.PI - 1) {
@@ -51,6 +56,10 @@ public class Player implements slather.sim.Player {
 		//		next = new Point(Math.cos(angle), Math.sin(angle));
 				break;
 			}
+		}
+		if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
+			angle = findTheLargestAngle(player_cell, cells, pheromes);
+			next = new Point(Math.cos(angle), Math.sin(angle));
 		}
 		if (Math.abs(angle) > Math.PI * 2 - 1 || collides(player_cell, next, nearby_cells, nearby_pheromes)) {
 			angle = (double)memory * 2.0 * Math.PI / 128;
