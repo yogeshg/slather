@@ -188,11 +188,11 @@ class Simulator {
     }
 
     // play game
-    private static long play(boolean gui) throws Exception, IOException
+    private static long play(boolean gui, int port) throws Exception, IOException
     {
 	HTTPServer server = null;
 	if (gui) {
-	    server = new HTTPServer();
+	    server = new HTTPServer(port);
 	    System.err.println("HTTP port: " + server.port());
 	    // try to open web browser automatically
 	    if (!Desktop.isDesktopSupported())
@@ -230,6 +230,7 @@ class Simulator {
     {
 	boolean gui = false;
 	boolean recompile = true;
+	int port = 8080;
 	int game_id = -1;
 	String game_path = null;
 	String play_path = null;
@@ -275,6 +276,8 @@ class Simulator {
 		    groups = new String[p];
 		    for (int i=0; i<p; i++) 
 			groups[i] = args[++a];
+		} else if(args[a].equals("-p") || args[a].equals("--port")) {
+			port = Integer.parseInt(args[++a]);
 		} else if (args[a].equals("--init-timeout")) {
 		    if (++a == args.length)
 			throw new IllegalArgumentException("Missing init() timeout");
@@ -346,7 +349,7 @@ class Simulator {
 	}
 	long turns = -1;
 	try {
-	    turns = play(gui);
+	    turns = play(gui, port);
 	} catch (Exception e) {
 	    System.err.println("Error during play: " + e.getMessage());
 	    e.printStackTrace();

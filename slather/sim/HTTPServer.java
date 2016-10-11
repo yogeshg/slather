@@ -22,6 +22,16 @@ class HTTPServer {
 			throw new NotYetBoundException();
 	}
 
+	public HTTPServer(int port) throws IOException
+	{
+        System.err.println("Trying to bind to port "+port);
+		socket = new ServerSocket(port);
+		// socket.bind();
+		if (!socket.isBound()) {
+			throw new NotYetBoundException();
+        }
+	}
+
 	public int port()
 	{
 		return socket == null ? -1 : socket.getLocalPort();
