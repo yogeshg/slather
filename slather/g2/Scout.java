@@ -137,7 +137,7 @@ public class Scout extends Player {
 			}
 		} else
 
-		if (true || surrounded <= Math.PI * 0.7) {
+		if (true || surrounded <= TRANSITION) {
 			vision = threshold;
 			pvision = pthreshold;
 			//while (angle > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
@@ -179,7 +179,18 @@ public class Scout extends Player {
 			if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes))
 				return new Move(next, memory);
 		}
-		return new Move(new Point(0, 0), (byte) memory);
+
+		for (int i = 0; i < 100; ++ i) {
+			angle = this.RANDOM_GENERATOR.nextDouble() * Math.PI * 2 - Math.PI;
+			for (double len = 1; len > 0.1; len -= 0.1) {
+				Point next = new Point(Math.cos(angle) * len, Math.sin(angle) * len);
+				if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+					memory = angle2byte(angle, memory);
+					return new Move(next, memory);
+				}
+			}
+		}
+		return new Move(new Point(0, 1), (byte) memory);
     }
 
 		private class Option implements Comparable<Option> {
