@@ -101,21 +101,32 @@ public class Player implements slather.sim.Player {
         if (player_cell.getDiameter() >= 2){
             final boolean prob12 = (RANDOM_GENERATOR.nextDouble() < PROB_PLAYER1_TO_PLAYER2);
             final boolean prob21 = (RANDOM_GENERATOR.nextDouble() < PROB_PLAYER2_TO_PLAYER1);
+            final boolean transformBoth = true;
             if(!byteIsCircle(memory)) {
                 if( prob12 ) {
-                    m = player2.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
-                    m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                    if( transformBoth ){
+                        m = player2.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                        m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory|ROLE_CIRCLE) );                    
+                    } else {
+                        m = player2.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                        m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory&ROLE_SCOUT) );                    
+                    }
                 } else {
-                    m = player1.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
-                    m = new Move( true, (byte)(m.memory&ROLE_SCOUT), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                        m = player1.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                        m = new Move( true, (byte)(m.memory&ROLE_SCOUT), (byte)(m.daughter_memory&ROLE_SCOUT) );
                 }
             } else {
                 if( prob21 ) {
-                    m = player1.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
-                    m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                    if( transformBoth ){
+                        m = player1.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                        m = new Move( true, (byte)(m.memory&ROLE_SCOUT), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                    } else {
+                        m = player1.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                        m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                    }
                 } else {
-                    m = player2.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
-                    m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory|ROLE_CIRCLE) );
+                        m = player2.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                        m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory|ROLE_CIRCLE) );
                 }
                 
             }

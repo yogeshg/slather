@@ -12,7 +12,7 @@ import slather.g2.util.Vector;
 public class GridCircler extends Chiller {
 
     private Grider grider = null;
-    private Landmark circler = null;
+    private Circler circler = null;
     private Scout scout = null;
     float EPSILON;
 
@@ -23,7 +23,7 @@ public class GridCircler extends Chiller {
         grider = new Grider();
         grider.init(d, t, side_length);
 
-        circler = new Landmark();
+        circler = new Circler();
         circler.init(d, t, side_length);
         // circler.RADIUS = 2.0 * t / (2*Math.PI);
 
