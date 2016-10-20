@@ -27,15 +27,16 @@ public class Player implements slather.sim.Player {
 
     protected String CONFIG_FILE_NAME = "player.cfg";
 
-    protected double PROB_CIRCLE;
+    protected double PROB_PLAYER1_TO_PLAYER2;
+    protected double PROB_PLAYER2_TO_PLAYER1;
     protected double RADIUS_TO_TAIL_RATIO;
     protected double GRID_DIST_TO_TAIL_RATIO;
     protected String INITIAL_CLASS;
     protected String PROB_CLASS;
     protected String ADJUST_PROB;
 
-    private Player occupier = null;
-    private Player scout = null;
+    private Player player1 = null;
+    private Player player2 = null;
 
     // Initialize here, initialize sub strategies here.
     // Take care to initialize VISION, TAIL_LENGTH, BOARD_SIZE, RANDOM_GENERATOR in your subclass
@@ -51,6 +52,10 @@ public class Player implements slather.sim.Player {
             return new Grider();
         } else if(className.equals("Circler")) {
             return new Circler();
+        } else if(className.equals("AwayFromBig")) {
+            return new AwayFromBig();
+        }  else if(className.equals("Landmark")) {
+            return new Landmark();
         } else {
             return new Chiller();
         }
@@ -68,16 +73,16 @@ public class Player implements slather.sim.Player {
 
         if( this.ADJUST_PROB.equals("0WhenTaillessThan5") ){
             if (t <= 4) {
-                this.PROB_CIRCLE = 0;
+                this.PROB_PLAYER1_TO_PLAYER2 = 0;
             }
         }
 
 
-        scout = getPlayerInstance(INITIAL_CLASS);
-        occupier = getPlayerInstance(PROB_CLASS);
+        player1 = getPlayerInstance(INITIAL_CLASS);
+        player2 = getPlayerInstance(PROB_CLASS);
 
-        occupier.init(d, t, side_length);
-        scout.init(d, t, side_length);
+        player1.init(d, t, side_length);
+        player2.init(d, t, side_length);
     }
 
     public String move2String(Move m) {
@@ -94,25 +99,31 @@ public class Player implements slather.sim.Player {
         // reproduce whenever possible
         Move m;
         if (player_cell.getDiameter() >= 2){
-            final double randomNumber = RANDOM_GENERATOR.nextDouble();
-            if(!byteIsCircle(memory) &&  (randomNumber< PROB_CIRCLE)) {
-                m = occupier.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+            final boolean prob12 = (RANDOM_GENERATOR.nextDouble() < PROB_PLAYER1_TO_PLAYER2);
+            final boolean prob21 = (RANDOM_GENERATOR.nextDouble() < PROB_PLAYER2_TO_PLAYER1);
+            if(!byteIsCircle(memory)) {
+                if( prob12 ) {
+                    m = player2.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                    m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                } else {
+                    m = player1.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                    m = new Move( true, (byte)(m.memory&ROLE_SCOUT), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                }
             } else {
-                m = scout.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                if( prob21 ) {
+                    m = player1.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                    m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory&ROLE_SCOUT) );
+                } else {
+                    m = player2.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
+                    m = new Move( true, (byte)(m.memory|ROLE_CIRCLE), (byte)(m.daughter_memory|ROLE_CIRCLE) );
+                }
+                
             }
         } else {
-            boolean nextIsCircle = byteIsCircle(memory);
-            // nextIsCircle = false;
-            // if(scout.crowded(player_cell,nearby_cells)){
-            //     nextIsCircle = true;
-            // }
-            if(nextIsCircle){
-                // System.out.println("nextIsCircle");
-            }
-            if(!nextIsCircle) {
-                m = scout.play(player_cell, memory, nearby_cells, nearby_pheromes);
+            if(!byteIsCircle(memory)) {
+                m = player1.play(player_cell, memory, nearby_cells, nearby_pheromes);
             } else {
-                m = occupier.play(player_cell, memory, nearby_cells, nearby_pheromes);
+                m = player2.play(player_cell, memory, nearby_cells, nearby_pheromes);
             }
         }
 
@@ -170,7 +181,8 @@ public class Player implements slather.sim.Player {
             input = getClass().getResourceAsStream(CONFIG_FILE_NAME);
             // input = new FileInputStream(CONFIG_FILE_NAME);
             prop.load(input);
-            this.PROB_CIRCLE          = Float.parseFloat(prop.getProperty("PROB_CIRCLE"));
+            this.PROB_PLAYER1_TO_PLAYER2          = Float.parseFloat(prop.getProperty("PROB_PLAYER1_TO_PLAYER2"));
+            this.PROB_PLAYER2_TO_PLAYER1          = Float.parseFloat(prop.getProperty("PROB_PLAYER2_TO_PLAYER1"));
             this.RADIUS_TO_TAIL_RATIO = Float.parseFloat(prop.getProperty("RADIUS_TO_TAIL_RATIO"));
             this.GRID_DIST_TO_TAIL_RATIO = Float.parseFloat(prop.getProperty("GRID_DIST_TO_TAIL_RATIO"));
             this.INITIAL_CLASS        = prop.getProperty("INITIAL_CLASS");
@@ -199,7 +211,8 @@ public class Player implements slather.sim.Player {
             File file = new File( getClass().getResource(CONFIG_FILE_NAME).toURI() );
             output = new FileOutputStream(file);
 
-            prop.setProperty("PROB_CIRCLE", ""+this.PROB_CIRCLE);
+            prop.setProperty("PROB_PLAYER1_TO_PLAYER2", ""+this.PROB_PLAYER1_TO_PLAYER2);
+            prop.setProperty("PROB_PLAYER2_TO_PLAYER1", ""+this.PROB_PLAYER2_TO_PLAYER1);
             prop.setProperty("RADIUS_TO_TAIL_RATIO", ""+this.RADIUS_TO_TAIL_RATIO);
             prop.setProperty("GRID_DIST_TO_TAIL_RATIO", ""+this.GRID_DIST_TO_TAIL_RATIO);
             prop.setProperty("INITIAL_CLASS", this.INITIAL_CLASS);
@@ -223,7 +236,8 @@ public class Player implements slather.sim.Player {
 
     protected void getPropertiesSafe() {
         if(!getProperties()){
-            this.PROB_CIRCLE = 0.2;
+            this.PROB_PLAYER1_TO_PLAYER2 = 0.2;
+            this.PROB_PLAYER2_TO_PLAYER1 = 0.1;
             this.RADIUS_TO_TAIL_RATIO = 1.0;
             this.GRID_DIST_TO_TAIL_RATIO = 1.0;
             this.INITIAL_CLASS = "Scout";

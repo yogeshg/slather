@@ -59,4 +59,14 @@ public class Vector extends Point {
         return new Vector(dx, dy);
     }
 
+    public double crossProduct(Vector v) {
+        return (x * v.y) - (y * v.x);
+    }
+
+    // public getSideOfLine(Vector line, )
+
+    public String toString() {
+        return "("+String.format("%.2f", x)+","+String.format("%.2f", y)+")";
+    }
+
 }

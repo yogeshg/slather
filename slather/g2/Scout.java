@@ -30,6 +30,7 @@ public class Scout extends Player {
 
     @Override
     public void init(double d, int t, int size) {
+        System.out.println("Scout init");
         this.RANDOM_GENERATOR = new Random();
         this.BOARD_SIZE = size;
         this.VISION = d;

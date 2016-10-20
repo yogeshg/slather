@@ -12,7 +12,8 @@ import slather.g2.util.Vector;
 public class GridCircler extends Chiller {
 
     private Grider grider = null;
-    private Circler circler = null;
+    private Landmark circler = null;
+    private Scout scout = null;
     float EPSILON;
 
 
@@ -22,9 +23,12 @@ public class GridCircler extends Chiller {
         grider = new Grider();
         grider.init(d, t, side_length);
 
-        circler = new Circler();
+        circler = new Landmark();
         circler.init(d, t, side_length);
         // circler.RADIUS = 2.0 * t / (2*Math.PI);
+
+        scout = new Scout();
+        scout.init(d, t, side_length);
 
         this.EPSILON = (float)0.001;
 
@@ -34,8 +38,26 @@ public class GridCircler extends Chiller {
         Move m = null;
 
         m = grider.play(player_cell, memory, nearby_cells, nearby_pheromes);
+
         if(m.vector.norm() < this.EPSILON ){
             m = circler.play(player_cell, memory, nearby_cells, nearby_pheromes);
+        }
+
+        Move m2 = null;
+        if((m.vector.norm() < this.EPSILON ) || (this.collides( player_cell, new Vector (m.vector), nearby_cells, nearby_pheromes))){
+            m2 = scout.play(player_cell, memory, nearby_cells, nearby_pheromes);
+            if((m2.vector.norm() < this.EPSILON ) || (this.collides( player_cell, new Vector (m2.vector), nearby_cells, nearby_pheromes))){
+                Vector dir;
+                
+                while( (this.collides( player_cell, new Vector (m2.vector), nearby_cells, nearby_pheromes)) && (m.vector.norm() > this.EPSILON) ) {
+                    dir = new Vector( m.vector );
+                    dir = dir.multiply(0.9);
+                    m = new Move( dir, memory );
+                }
+                
+            } else {
+                m = m2;
+            }
         }
 
         // if all tries fail, just chill in place
@@ -43,42 +65,7 @@ public class GridCircler extends Chiller {
     }
 
     public Move reproduce(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-        // System.out.println("Circler reproduce");
-        return new Move(true, (byte)(memory|ROLE_CIRCLE), memory);
+        return circler.reproduce(player_cell, memory, nearby_cells, nearby_pheromes);
     }
-
-    private static final double TWOPI = 2*Math.PI;
-
-    private double byte2angle(byte b) {
-        // -128 <= b < 128
-        // -1 <= b/128 < 1
-        // -pi <= a < pi
-        return normalizeAngle(TWOPI * (((double) ((b) & this.ANGLE_MASK) ) / this.ANGLE_MAX), 0);
-    }
-
-    private byte angle2byte(double a, byte b) {
-        final double actualAngle = ((normalizeAngle(a,0) / TWOPI)*this.ANGLE_MAX);
-        final int anglePart = (int) (((int)actualAngle) & this.ANGLE_MASK);
-        final byte memoryPart = (byte) ( b & ~this.ANGLE_MASK);
-        // System.out.println("angle2byte "+ memoryPart +","+ anglePart +","+ (normalizeAngle(a,0)/TWOPI) +","+ this.ANGLE_MAX +","+ a);
-        return (byte) ((anglePart | memoryPart));
-    }
-
-    private double normalizeAngle(double a, double start) {
-        if( a < start ) {
-            return normalizeAngle( a+TWOPI, start);
-        } else if (a >= (start+TWOPI)) {
-            return normalizeAngle( a-TWOPI, start);
-        } else {
-            return a;
-        }
-    }
-
-    private Vector angle2vector(double a) {
-        double dx = Cell.move_dist * Math.cos(a);
-        double dy = Cell.move_dist * Math.sin(a);
-        return new Vector(dx, dy);
-    }
-
 
 }
