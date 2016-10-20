@@ -14,7 +14,7 @@ class Simulator {
 
     // timeouts
     private static long init_timeout = 1000;
-    private static long play_timeout = 1000;
+    private static long play_timeout = 40;
 
     // exit on player exception
     private static boolean exit_on_exception = false;
@@ -60,11 +60,18 @@ class Simulator {
     private static boolean log = false;
     
     
-    private static boolean init() {
+    private static boolean init() {	
 	grid = new Grid((double)side_length, d);
 	for (int g=0; g<p; g++) {
 	    for (int j=0; j<n; j++) {
-		grid.add(new Cell( new Point(random.nextInt(side_length),random.nextInt(side_length)), g) );
+		boolean added = false;
+		Cell new_cell = null;
+		while (!added) {
+		    new_cell = new Cell( new Point(random.nextInt(side_length),random.nextInt(side_length)), g);
+		    if (grid.fits(new_cell))
+			added = true;
+		}
+		grid.add(new_cell);
 	    }
 	}
 
