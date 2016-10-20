@@ -30,7 +30,7 @@ public class GridCircler extends Chiller {
         scout = new Scout();
         scout.init(d, t, side_length);
 
-        this.EPSILON = (float)0.001;
+        this.EPSILON = (float)0.00001;
 
     }
 

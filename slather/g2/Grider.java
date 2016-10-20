@@ -21,7 +21,7 @@ public class Grider extends Chiller {
 
         getPropertiesSafe();
 
-        this.MIN_DISTANCE = 0.5;
+        this.MIN_DISTANCE = 4;
 
     }
 
