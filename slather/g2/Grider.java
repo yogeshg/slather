@@ -11,7 +11,7 @@ import slather.g2.util.Vector;
 
 public class Grider extends Chiller {
 
-    double MIN_DISTANCE;
+    double DISTANCE;
 
     public void init(double d, int t, int side_length) {
         System.out.println("Grider init");
@@ -21,7 +21,7 @@ public class Grider extends Chiller {
 
         getPropertiesSafe();
 
-        this.MIN_DISTANCE = 4;
+        this.DISTANCE = this.GRID_DIST_TO_TAIL_RATIO * t;
 
     }
 
@@ -37,7 +37,7 @@ public class Grider extends Chiller {
             if( player == other.player ) {
                 other_pos = new Vector(other.getPosition());
                 difference = other_pos.getTaurusDistance(self_pos, BOARD_SIZE);
-                if( Math.hypot( difference.x, difference.y ) <= MIN_DISTANCE ) {
+                if( Math.hypot( difference.x, difference.y ) <= DISTANCE ) {
                     differences.add( difference );
                 }
             }

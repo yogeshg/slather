@@ -31,9 +31,10 @@ public class Player implements slather.sim.Player {
     protected double PROB_PLAYER2_TO_PLAYER1;
     protected double RADIUS_TO_TAIL_RATIO;
     protected double GRID_DIST_TO_TAIL_RATIO;
-    protected String INITIAL_CLASS;
-    protected String PROB_CLASS;
+    protected String PLAYER1_CLASS;
+    protected String PLAYER2_CLASS;
     protected String ADJUST_PROB;
+    protected String TRANSFORM_METHOD;
 
     private Player player1 = null;
     private Player player2 = null;
@@ -78,8 +79,8 @@ public class Player implements slather.sim.Player {
         }
 
 
-        player1 = getPlayerInstance(INITIAL_CLASS);
-        player2 = getPlayerInstance(PROB_CLASS);
+        player1 = getPlayerInstance(PLAYER1_CLASS);
+        player2 = getPlayerInstance(PLAYER2_CLASS);
 
         player1.init(d, t, side_length);
         player2.init(d, t, side_length);
@@ -101,7 +102,7 @@ public class Player implements slather.sim.Player {
         if (player_cell.getDiameter() >= 2){
             final boolean prob12 = (RANDOM_GENERATOR.nextDouble() < PROB_PLAYER1_TO_PLAYER2);
             final boolean prob21 = (RANDOM_GENERATOR.nextDouble() < PROB_PLAYER2_TO_PLAYER1);
-            final boolean transformBoth = true;
+            final boolean transformBoth = TRANSFORM_METHOD.equals("Both");
             if(!byteIsCircle(memory)) {
                 if( prob12 ) {
                     if( transformBoth ){
@@ -196,9 +197,10 @@ public class Player implements slather.sim.Player {
             this.PROB_PLAYER2_TO_PLAYER1          = Float.parseFloat(prop.getProperty("PROB_PLAYER2_TO_PLAYER1"));
             this.RADIUS_TO_TAIL_RATIO = Float.parseFloat(prop.getProperty("RADIUS_TO_TAIL_RATIO"));
             this.GRID_DIST_TO_TAIL_RATIO = Float.parseFloat(prop.getProperty("GRID_DIST_TO_TAIL_RATIO"));
-            this.INITIAL_CLASS        = prop.getProperty("INITIAL_CLASS");
-            this.PROB_CLASS           = prop.getProperty("PROB_CLASS");
+            this.PLAYER1_CLASS        = prop.getProperty("PLAYER1_CLASS");
+            this.PLAYER2_CLASS           = prop.getProperty("PLAYER2_CLASS");
             this.ADJUST_PROB          = prop.getProperty("ADJUST_PROB");
+            this.TRANSFORM_METHOD       = prop.getProperty("TRANSFORM_METHOD");
             returnVal = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -226,9 +228,11 @@ public class Player implements slather.sim.Player {
             prop.setProperty("PROB_PLAYER2_TO_PLAYER1", ""+this.PROB_PLAYER2_TO_PLAYER1);
             prop.setProperty("RADIUS_TO_TAIL_RATIO", ""+this.RADIUS_TO_TAIL_RATIO);
             prop.setProperty("GRID_DIST_TO_TAIL_RATIO", ""+this.GRID_DIST_TO_TAIL_RATIO);
-            prop.setProperty("INITIAL_CLASS", this.INITIAL_CLASS);
-            prop.setProperty("PROB_CLASS", this.PROB_CLASS);
+            prop.setProperty("PLAYER1_CLASS", this.PLAYER1_CLASS);
+            prop.setProperty("PLAYER2_CLASS", this.PLAYER2_CLASS);
             prop.setProperty("ADJUST_PROB", this.ADJUST_PROB);
+            prop.setProperty("TRANSFORM_METHOD", this.TRANSFORM_METHOD);
+
             prop.store(output, null);
 
         } catch (
@@ -247,13 +251,14 @@ public class Player implements slather.sim.Player {
 
     protected void getPropertiesSafe() {
         if(!getProperties()){
-            this.PROB_PLAYER1_TO_PLAYER2 = 0.2;
+            this.PROB_PLAYER1_TO_PLAYER2 = 1;
             this.PROB_PLAYER2_TO_PLAYER1 = 0.1;
             this.RADIUS_TO_TAIL_RATIO = 1.0;
-            this.GRID_DIST_TO_TAIL_RATIO = 1.0;
-            this.INITIAL_CLASS = "Scout";
-            this.PROB_CLASS = "Circler";
+            this.GRID_DIST_TO_TAIL_RATIO = 0.33;
+            this.PLAYER1_CLASS = "Scout";
+            this.PLAYER2_CLASS = "GridCircler";
             this.ADJUST_PROB = "0WhenTaillessThan5";
+            this.TRANSFORM_METHOD = "Both";
             setProperties();
         }
     }
