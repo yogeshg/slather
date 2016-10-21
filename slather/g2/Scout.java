@@ -3,18 +3,7 @@ package slather.g2;
 import slather.sim.Cell;
 
 
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
 import slather.sim.Point;
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
-///////////////// DO NOT import tjis file please.
-
 
 import slather.sim.Move;
 import slather.sim.Pherome;
@@ -30,7 +19,6 @@ public class Scout extends Player {
 
     @Override
     public void init(double d, int t, int size) {
-        System.out.println("Scout init");
         this.RANDOM_GENERATOR = new Random();
         this.BOARD_SIZE = size;
         this.VISION = d;
@@ -83,41 +71,70 @@ public class Scout extends Player {
         if (player_cell.getDiameter() >= 2) // reproduce whenever possible
             return new Move(true, (byte)-1, (byte)-1);
 
-        double threshold = player_cell.getDiameter() * 0.5 + 4;
-		double pthreshold = threshold;
+		double radius = player_cell.getDiameter() * 0.5;
+		double incremental = radius * 0.02;
+        double threshold = radius + 4;
+		double btm_threshold = radius + 1;
+		//double pthreshold = threshold;
 		double TRANSITION = Math.PI * 0.6;
 		//double pthreshold = player_cell.getDiameter() * 0.5 + 2;
 
 		Set<Pherome> pheromes = new HashSet<Pherome>();
 		Set<Cell> cells = new HashSet<Cell>();
 
+		int enemy_cells = 0;
+
 		for (Cell cell : nearby_cells)
 			if (cell.player == player_cell.player)
 				cells.add(cell);
+			else if (cell.getPosition().distance(player_cell.getPosition()) <= threshold)
+				++ enemy_cells;
 		for (Pherome pherome : nearby_pheromes)
 			if (pherome.player == player_cell.player)
 				pheromes.add(pherome);
 		double surrounded = angleCovered(player_cell, cells, pheromes);
 
+		// Move away from big
+		if (enemy_cells == 0) {
+			cells.clear();
+			for (Cell cell : nearby_cells)
+				if (cell.player == player_cell.player && cell.getPosition().distance(player_cell.getPosition()) <= threshold
+					&& cell.getDiameter() >= player_cell.getDiameter())
+					cells.add(cell);
+
+			if (cells.size() > 0) {
+				List<Option> options = findFreeAngles(player_cell, cells, new HashSet<Pherome> ());
+				if (options.size() > 0) {
+					for (Option opt : options) {
+						for (double len = 1; len > 0.2; len -= 0.1) {
+							Point next = new Point(Math.cos(opt.angle) * len, Math.sin(opt.angle) * len);
+							if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+								memory = angle2byte(opt.angle, memory);
+								return new Move(next, memory);
+							}
+						}
+					}
+				}
+			}
+
+		}
+
 		double vision = threshold;
-		double pvision = pthreshold;
 
 		if (surrounded > TRANSITION) {
-			vision = threshold;
-			pvision = pthreshold;
-			while (vision - player_cell.getDiameter() * 0.5 >= 1) {
-				// consider only enemy pheromes and own cells
+			// Don't consider any pheromes
+			// consider only own cells
+			pheromes.clear();
+			for (vision = threshold; vision >= btm_threshold; vision *= 0.9) {
 				cells.clear();
 				for (Cell cell : nearby_cells)
-					if (cell.player == player_cell.player || cell.getPosition().distance(player_cell.getPosition()) <= vision)
+					if (cell.player == player_cell.player && cell.getPosition().distance(player_cell.getPosition()) <= vision)
 						cells.add(cell);
 
-				pheromes.clear();
 				/*for (Pherome pherome : nearby_pheromes)
 					if (pherome.player != player_cell.player && pherome.getPosition().distance(player_cell.getPosition()) <= pvision)
 						pheromes.add(pherome);*/
 
-				//angle = findTheLargestAngle(player_cell, cells, pheromes);
 				if (cells.size() == 0 && pheromes.size() == 0) break;
 
 				List<Option> options = findFreeAngles(player_cell, cells, pheromes);
@@ -132,28 +149,22 @@ public class Scout extends Player {
 						}
 					}
 				}
-				//next = new Point(Math.cos(angle), Math.sin(angle));
-				vision *= 0.9;
-				pvision *= 0.9;
 			}
 		} else
 
 		if (true || surrounded <= TRANSITION) {
-			vision = threshold;
-			pvision = pthreshold;
-			//while (angle > Math.PI * 2 - 1 || collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
-			while (vision - player_cell.getDiameter() * 0.5 >= 1) {
+			//Consider all cells and enemy pheromes
+
+			for (vision = threshold; vision >= btm_threshold; vision *= 0.9) {
 				cells.clear();
 				for (Cell cell : nearby_cells)
 					if (cell.getPosition().distance(player_cell.getPosition()) <= vision)
 						cells.add(cell);
 				pheromes.clear();
 				for (Pherome pherome : nearby_pheromes)
-					if (pherome.player != player_cell.player && pherome.getPosition().distance(player_cell.getPosition()) <= pvision)
+					if (pherome.player != player_cell.player && pherome.getPosition().distance(player_cell.getPosition()) <= vision)
 						pheromes.add(pherome);
 
-				//angle = findTheLargestAngle(player_cell, cells, pheromes);
-				//next = new Point(Math.cos(angle), Math.sin(angle));
 				if (cells.size() == 0 && pheromes.size() == 0) break;
 
 				List<Option> options = findFreeAngles(player_cell, cells, pheromes);
@@ -168,9 +179,6 @@ public class Scout extends Player {
 						}
 					}
 				}
-
-				vision *= 0.9;
-				pvision *= 0.9;
 			}
 		}
 
@@ -181,7 +189,7 @@ public class Scout extends Player {
 				return new Move(next, memory);
 		}
 
-		for (int i = 0; i < 100; ++ i) {
+		for (int i = 0; i < 10; ++ i) {
 			angle = this.RANDOM_GENERATOR.nextDouble() * Math.PI * 2 - Math.PI;
 			for (double len = 1; len > 0.1; len -= 0.1) {
 				Point next = new Point(Math.cos(angle) * len, Math.sin(angle) * len);
