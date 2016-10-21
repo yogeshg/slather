@@ -108,7 +108,7 @@ public class Scout extends Player {
 					for (Option opt : options) {
 						for (double len = 1; len > 0.2; len -= 0.1) {
 							Point next = new Point(Math.cos(opt.angle) * len, Math.sin(opt.angle) * len);
-							if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+							if (!paddedCollides(player_cell, new Vector(next), nearby_cells, nearby_pheromes, incremental)) {
 								memory = angle2byte(opt.angle, memory);
 								return new Move(next, memory);
 							}
@@ -142,7 +142,7 @@ public class Scout extends Player {
 					for (Option opt : options) {
 						for (double len = 1; len > 0.2; len -= 0.1) {
 							Point next = new Point(Math.cos(opt.angle) * len, Math.sin(opt.angle) * len);
-							if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+							if (!paddedCollides(player_cell, new Vector(next), nearby_cells, nearby_pheromes, incremental)) {
 								memory = angle2byte(opt.angle, memory);
 								return new Move(next, memory);
 							}
@@ -172,7 +172,7 @@ public class Scout extends Player {
 					for (Option opt : options) {
 						for (double len = 1; len > 0.1; len -= 0.1) {
 							Point next = new Point(Math.cos(opt.angle) * len, Math.sin(opt.angle) * len);
-							if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+							if (!paddedCollides(player_cell, new Vector(next), nearby_cells, nearby_pheromes, incremental)) {
 								memory = angle2byte(opt.angle, memory);
 								return new Move(next, memory);
 							}
@@ -185,7 +185,7 @@ public class Scout extends Player {
         double angle = byte2angle(memory);
 		for (double len = 1; len > 0.1; len -= 0.1) {
 			Point next = new Point(Math.cos(angle) * len, Math.sin(angle) * len);
-			if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes))
+			if (!paddedCollides(player_cell, new Vector(next), nearby_cells, nearby_pheromes, incremental))
 				return new Move(next, memory);
 		}
 
@@ -193,13 +193,13 @@ public class Scout extends Player {
 			angle = this.RANDOM_GENERATOR.nextDouble() * Math.PI * 2 - Math.PI;
 			for (double len = 1; len > 0.1; len -= 0.1) {
 				Point next = new Point(Math.cos(angle) * len, Math.sin(angle) * len);
-				if (!collides(player_cell, new Vector(next), nearby_cells, nearby_pheromes)) {
+				if (!paddedCollides(player_cell, new Vector(next), nearby_cells, nearby_pheromes, incremental)) {
 					memory = angle2byte(angle, memory);
 					return new Move(next, memory);
 				}
 			}
 		}
-		return new Move(new Point(0, 1), (byte) memory);
+		return new Move(new Point(0, 0.1), (byte) memory);
     }
 
 		private class Option implements Comparable<Option> {
@@ -426,5 +426,24 @@ public class Scout extends Player {
         // System.out.println("Scout reproduce");
         return new Move(true, memory, memory);
     }
+
+	// check if moving player_cell by vector collides with any nearby cell or hostile pherome
+    protected boolean paddedCollides(Cell player_cell, Vector vector, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes, double padded) {
+        Iterator<Cell> cell_it = nearby_cells.iterator();
+        Vector destination = new Vector( player_cell.getPosition().move(vector.getPoint()) );
+        while (cell_it.hasNext()) {
+            Cell other = cell_it.next();
+            if ( destination.distance(other.getPosition()) < 0.5*player_cell.getDiameter() + 0.5*other.getDiameter() + 0.00011 + (player_cell.player == other.player ? padded : 0)) 
+                return true;
+        }
+        Iterator<Pherome> pherome_it = nearby_pheromes.iterator();
+        while (pherome_it.hasNext()) {
+            Pherome other = pherome_it.next();
+            if (other.player != player_cell.player && destination.distance(other.getPosition()) < 0.5*player_cell.getDiameter() + 0.0001) 
+                return true;
+        }
+        return false;
+    }
+
 
 }
