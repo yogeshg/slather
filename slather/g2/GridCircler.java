@@ -20,6 +20,9 @@ public class GridCircler extends Chiller {
     public void init(double d, int t, int side_length) {
         System.out.println("GridCircler init");
 
+		// Path for the radius of circle
+		t = Math.min(t, 12);
+
         grider = new Grider();
         grider.init(d, t, side_length);
 
