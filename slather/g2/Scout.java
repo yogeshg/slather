@@ -73,11 +73,12 @@ public class Scout extends Player {
 
 		double radius = player_cell.getDiameter() * 0.5;
 		double incremental = radius * 0.02;
-        double threshold = radius + 4;
+        double threshold = radius + 2;
 		double btm_threshold = radius + 1;
 		//double pthreshold = threshold;
-		double TRANSITION = Math.PI * 0.6;
+		double TRANSITION = Math.PI * 0.7;
 		//double pthreshold = player_cell.getDiameter() * 0.5 + 2;
+		double slowmove = 0.3;
 
 		Set<Pherome> pheromes = new HashSet<Pherome>();
 		Set<Cell> cells = new HashSet<Cell>();
@@ -189,7 +190,7 @@ public class Scout extends Player {
 				return new Move(next, memory);
 		}
 
-		for (int i = 0; i < 10; ++ i) {
+		for (int i = 0; i < 8; ++ i) {
 			angle = this.RANDOM_GENERATOR.nextDouble() * Math.PI * 2 - Math.PI;
 			for (double len = 1; len > 0.1; len -= 0.1) {
 				Point next = new Point(Math.cos(angle) * len, Math.sin(angle) * len);
@@ -199,6 +200,7 @@ public class Scout extends Player {
 				}
 			}
 		}
+
 		return new Move(new Point(0, 0.1), (byte) memory);
     }
 
@@ -375,6 +377,8 @@ public class Scout extends Player {
 			result.add(new Option(angle, w));
         }
 		Collections.sort(result);
+
+		if (result.size() > 2) result = result.subList(0, 2);
 
 		//for (Option opt : result)
 	//		System.out.print("(" + opt.angle + "," + opt.width + ")");
