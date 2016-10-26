@@ -15,12 +15,13 @@ import java.math.*;
 
 public class ToolBox {
 
-	public static double EXPLORER_PROBABILITY = 0;
+	public static double EXPLORER_PROBABILITY = 0.6;
 	public static Random gen = new Random();
 	public static double diameterBeforeReproduction = 1.92;
-	public static double friendsAngleThreshold = Math.PI / 3;
+	public static double friendsAngleThreshold = Math.PI / 4;
 	public static double enemiesAngleThreshold = Math.PI / 3;
 	public static int cellThreshold = 3;
+	public static int minCells = 4;
 
 	/*
 	 * Due to wrap around, the difference between two points in coordinate x and
@@ -121,8 +122,6 @@ public class ToolBox {
 			toReturn = new Point(offX, offY);
 		}
 
-		// System.out.println("The normalized direction is X: " + toReturn.x + "
-		// Y: " + toReturn.y);
 		return toReturn;
 	}
 
@@ -146,7 +145,6 @@ public class ToolBox {
 			toReturn = new Point(offX * length, offY * length);
 		}
 
-		System.out.println("The normalized direction is X: " + toReturn.x + " Y: " + toReturn.y);
 		return toReturn;
 	}
 
@@ -183,9 +181,6 @@ public class ToolBox {
 
 		}
 
-		// System.out.println("The merged force from cells is X: " + offX + " Y:
-		// " + offY);
-
 		return new Point(offX, offY);
 	}
 
@@ -210,9 +205,6 @@ public class ToolBox {
 				offY += chaseIt * weightForCell * c.getDiameter() * c.getDiameter() * myRadius * myRadius
 						/ (diff.y * Math.abs(diff.y));
 		}
-		// System.out.println("The merged force from cells is X: " + offX + " Y:
-		// " + offY);
-
 		return new Point(offX, offY);
 	}
 
@@ -236,8 +228,6 @@ public class ToolBox {
 			else
 				offY += chaseIt * weightForPherome * myRadius * myRadius / (diff.y * Math.abs(diff.y));
 		}
-		// System.out.println("The merged force from cells is X: " + offX + " Y:
-		// " + offY);
 
 		return new Point(offX, offY);
 	}
@@ -260,8 +250,6 @@ public class ToolBox {
 			offY += chaseIt * diff.y * weight;
 		}
 
-		// System.out.println("The merged force from pheromes is X: " + offX + "
-		// Y: " + offY);
 		return new Point(offX, offY);
 	}
 
@@ -275,8 +263,6 @@ public class ToolBox {
 		double offY = direction.y + gen.nextGaussian() * desiredStandardDeviation + desiredMean;
 
 		Point newDir = ToolBox.normalizeDistance(new Point(offX, offY));
-		// System.out.println("The randomized direction has X: " + newDir.x + "
-		// Y: " + newDir.y);
 		return newDir;
 	}
 
@@ -311,10 +297,8 @@ public class ToolBox {
 
 	public static Point checkSpaceForGrowth(Cell player_cell, Point vector, Set<Cell> nearby_cells,
 			Set<Pherome> nearby_pheromes) {
-		System.out.println("Recevied vector is " + vector.x + vector.y);
 		nearby_cells = ToolBox.limitVisionOnCells(player_cell, nearby_cells, 2.0);
 		nearby_pheromes = ToolBox.limitVisionOnPheromes(player_cell, nearby_pheromes, 1.1);
-		System.out.println("Checking " + nearby_cells.size() + " cells and " + nearby_pheromes.size() + " pheromes");
 
 		Iterator<Cell> cell_it = nearby_cells.iterator();
 		double newDiameter = 1.01 * player_cell.getDiameter();
@@ -334,7 +318,6 @@ public class ToolBox {
 				dirY = (Math.sqrt(newDistanceToMove)) * dirY;
 
 				destination = player_cell.getPosition().move(new Point(dirX, dirY));
-				System.out.println("Updating new direction due to cell to " + destination.x + ", " + destination.y);
 			}
 		}
 		Iterator<Pherome> pherome_it = nearby_pheromes.iterator();
@@ -349,11 +332,8 @@ public class ToolBox {
 				dirX = (Math.sqrt(newDistanceToMove)) * dirX;
 				dirY = (Math.sqrt(newDistanceToMove)) * dirY;
 				destination = player_cell.getPosition().move(new Point(dirX, dirY));
-				System.out.println("Updating new direction to " + destination.x + ", " + destination.y);
 			}
 		}
-		Point toReturn = new Point(dirX, dirY);
-		System.out.println("Final direction:" + toReturn.x + ", " + toReturn.y);
 		return new Point(dirX, dirY);
 	}
 
@@ -385,9 +365,6 @@ public class ToolBox {
 			double dist = ToolBox.calcRawDist(me, p);
 			distMap.put(dist, p);
 		}
-		if (distMap.size() < size) {
-			System.out.println("Only " + distMap.size() + " cells or enemy pheromones around.");
-		}
 		Set<GridObject> kept = new HashSet<>();
 		for (Map.Entry<Double, GridObject> e : distMap.entrySet()) {
 			if (kept.size() < size) {
@@ -414,7 +391,7 @@ public class ToolBox {
 		for (Pherome pherome : nearby_pheromes) {
 			if (pherome.player == player_cell.player) continue;
 			double dist = player_cell.distance(pherome);
-			if (dist <= 0.0001) return 0;
+			//if (dist <= 0.0001) return 0;
 			if (dist >= 0 && dist < closest) {
 				closest = dist;
 			}
@@ -439,5 +416,15 @@ public class ToolBox {
 				return true;
 		}
 		return false;
+	}
+
+	public static Set<Pherome> limitVisionOnEnemyPheromes(Cell player_cell, Set<Pherome> nearby_pheromes, double limit) {
+		Set<Pherome> restrictedNearbyPhermoes = new HashSet<>();
+		for (Pherome pherome : nearby_pheromes) {
+			if (player_cell.player != pherome.player && player_cell.distance(pherome) <= limit) {
+				restrictedNearbyPhermoes.add(pherome);
+			}
+		}
+		return restrictedNearbyPhermoes;
 	}
 }

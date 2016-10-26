@@ -36,7 +36,6 @@ public class FollowerStrategy implements Strategy {
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Follower strategy. Head to the closest friend I see.");
 		Point nextStep = generateNextDirection(player_cell, memory, nearby_cells, nearby_pheromes);
 		Memory nextMem = generateNextMoveMemory(memory);
 
@@ -62,10 +61,8 @@ public class FollowerStrategy implements Strategy {
 		}
 		Point toMove;
 		if (toFollow == null) {
-			System.out.println("Closest friend not found. Decide direction randomly.");
 			toMove = ToolBox.generateRandomDirection();
 		} else {
-			System.out.println("Going to closest friend " + toFollow.getPosition());
 			Set<Cell> togo = new HashSet<>();
 			togo.add(toFollow);
 			toMove = ToolBox.joinForcesFromCells(player_cell, togo, 1.0, -1, false);

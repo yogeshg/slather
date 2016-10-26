@@ -43,10 +43,8 @@ public class RangerStrategy implements Strategy{
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Ranger strategy. Go in circles.");
 		//If we were not circling last round, choose a wise direction to start
 		if(memory instanceof DummyMemory||memory instanceof ExplorerMemory){
-			System.out.println("The cell was not defender last round. Decide the direction.");
 			
 			//Choose a good move
 			Point dir=decideNextDirection(player_cell,nearby_cells,nearby_pheromes);
@@ -69,7 +67,6 @@ public class RangerStrategy implements Strategy{
 			
 			return new Move(nextStep,nextMem.getByte());
 		}else{
-			System.out.println("Error: Unmanipulable memory in RangerMemory "+memory.getByte());
 			return new Move(new Point(0,0),new DummyMemory().getByte());
 		}
 	}
@@ -89,7 +86,6 @@ public class RangerStrategy implements Strategy{
 		double step = 2 * Math.PI / sides;
 
 		double theta = start + step;
-		System.out.println("Current direction is " + start + ", going towards " + theta);
 		return ToolBox.newDirection(theta);
 	}
 	
@@ -106,7 +102,6 @@ public class RangerStrategy implements Strategy{
 		
 		//check how many steps this angle contains
 		int stepCount=(int)Math.ceil(angle/step);
-		System.out.println("Angle "+angle+" corresponds to memory "+stepCount);
 		return stepCount;
 	}
 	
@@ -135,11 +130,9 @@ public class RangerStrategy implements Strategy{
 
 		/* Find the largest gap between things */
 		if (angleMap.size() == 0) {
-			System.out.println("Nothing around. Just go somewhere. ");
 			Point dir = new Point(gen.nextDouble() - 0.5, gen.nextDouble() - 0.5);
 			return ToolBox.normalizeDistance(dir);
 		} else if (angleMap.size() == 1) {
-			System.out.println("Only one cell around.");
 			double toGo = angleMap.firstKey() + Math.PI;
 			return ToolBox.newDirection(toGo);
 		}
@@ -159,7 +152,6 @@ public class RangerStrategy implements Strategy{
 
 			double thisAngle = e.getKey();// this is the angle of the center
 			double angleDiff = ToolBox.angleDiff(lastAngle, thisAngle);
-			System.out.println("Angle difference with no regard to radius is:" + angleDiff);
 			// If the object is cell, need to consider the radius
 			Point mp = myCell.getPosition();
 			
@@ -171,14 +163,11 @@ public class RangerStrategy implements Strategy{
 				// calculate the distance between two points
 				Point diffPoint = ToolBox.pointDistance(cp, mp);
 				double mc = diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y;
-				System.out.println("Distance between points is:" + mc);
 				if (mc <= 0.00001) {// might overflow
-					System.out.println("Error: Distance between cells is smaller than radius!");
 				} else {
 					double cr = c.getDiameter();
 					// If the object is cell, the distance cannot be 0
 					double diffTheta = Math.asin(cr / mc);
-					System.out.println("Subtracting theta covered by cell radius: " + diffTheta);
 					angleDiff -= diffTheta;
 					endAngleTan=diffTheta;
 				}
@@ -189,14 +178,11 @@ public class RangerStrategy implements Strategy{
 				// calculate the distance between two points
 				Point diffPoint = ToolBox.pointDistance(cp, mp);
 				double mc = diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y;
-				System.out.println("Distance between points is:" + mc);
 				if (mc <= 0.00001) {// might overflow
-					System.out.println("Error: Distance between cells is smaller than radius!");
 				} else {
 					double cr = c.getDiameter();
 					// If the object is cell, the distance cannot be 0
 					double diffTheta = Math.asin(cr / mc);
-					System.out.println("Subtracting theta covered by cell radius: " + diffTheta);
 					angleDiff -= diffTheta;
 					startAngleTan=diffTheta;
 				}
@@ -213,12 +199,10 @@ public class RangerStrategy implements Strategy{
 			lastAngle = thisAngle;
 			lastPoint = thisPoint;
 		}
-		System.out.println("The largest gap found so far is: " + largestGap);
 
 		/* Decide the angle to go */
 //		double toGo = largestGapStart - 0.5 * largestGap;
 		double toGo=largestGapEnd;
-		System.out.println("The angle we go to is "+toGo);
 
 		/* Generate the point to go */
 		return ToolBox.newDirection(toGo);

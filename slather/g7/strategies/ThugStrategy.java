@@ -36,7 +36,6 @@ public class ThugStrategy implements Strategy{
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Thug strategy. Attack the biggest enemy cell around.");
 		Point nextStep=generateNextDirection(player_cell,memory,nearby_cells,nearby_pheromes);
 		Memory nextMem = generateNextMoveMemory(memory);
 
@@ -59,7 +58,6 @@ public class ThugStrategy implements Strategy{
 		//Go to that direction
 		Point toMove;
 		if(toAttack==null){
-			System.out.println("Nothing to attack. Go randomly.");
 			toMove=ToolBox.generateRandomDirection();
 		}else{
 			Set<Cell> target=new HashSet<>();

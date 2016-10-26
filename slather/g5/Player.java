@@ -12,19 +12,19 @@ import java.util.*;
 //at state 2, move away from friendly cells until there are expansion_ratio more enemy cells than friendly
 //switch to late game at 8 cells near you. At this point the mid game function is called. If it fails, (which it 
 //probably will) just move away from the nearest cell.
+@SuppressWarnings("unchecked")
 public class Player implements slather.sim.Player {
     
-    private static final double THRESHOLD_DISTANCE = 2;
+    private static final double THRESHOLD_DISTANCE = 1;
     
-    private static final int MIDGAME_CELL_THRESHOLD = 3;//friendly nearby cells to go from early to mid game
+    private static final int MIDGAME_CELL_THRESHOLD = 2;//friendly nearby cells to go from early to mid game
     
-    private static final double EXPANSION_RATIO = 2;//How many more enemy cells than friend cells there should be
+    private static final double EXPANSION_RATIO = 1.5;//How many more enemy cells than friend cells there should be
     												//before you stop pushing against the boundary
 	private static final int LATEGAME_CELL_THRESHOLD = 8;//isnt really used, since mid game and late game have
 														//the same strategy
 	private static final double ANGLE_PRECISION = 32;//2^bits used
 	private Random gen;
-    public AggresivePlayer aggresivePlayer;
     int t_;
     double d_;
     /*
@@ -41,7 +41,6 @@ public class Player implements slather.sim.Player {
     
     
     public void init(double d, int t, int side_length) {
-        aggresivePlayer = new AggresivePlayer();
         gen = new Random();
         t_ = t;
         d_ = d;
@@ -84,12 +83,25 @@ public class Player implements slather.sim.Player {
             }
         }
         nearby_list.sort(new GridObjectAnglePairComparator());
+        
         if(nearby_list.size()>1) {
             double widest = -1;
             int widest_index = -1;
             for(int i = 0; i < nearby_list.size(); ++i) {
             	Point p0 = nearby_list.get(i-1<0?nearby_list.size()-1:i-1).gridObject.getPosition();
             	Point p1 = nearby_list.get(i).gridObject.getPosition();
+            	/*System.out.println("i:"+ i);
+            	System.out.println(nearby_list.get(i-1<0?nearby_list.size()-1:i-1).gridObject.player);
+            	System.out.println(nearby_list.get(i).gridObject.player);
+            	System.out.println(player_cell.player);
+            	System.out.println(player_cell.getPosition().x + ", " + player_cell.getPosition().y);
+            	System.out.println(p0.x +", " +p0.y);
+            	System.out.println(p1.x +", " +p1.y);
+            	System.out.println(getClosestDirection(player_cell.getPosition(), p0).x + ", " + 
+            			getClosestDirection(player_cell.getPosition(), p0).y);
+            	System.out.println(getClosestDirection(player_cell.getPosition(), p1).x + ", " +
+            			getClosestDirection(player_cell.getPosition(), p1).y);*/
+            	
                 double angle = 
                 		angleBetweenVectors(getClosestDirection(player_cell.getPosition(), p0),
                 				getClosestDirection(player_cell.getPosition(), p1));
@@ -99,13 +111,14 @@ public class Player implements slather.sim.Player {
                     widest_index = i;
                 }
             }
-            //System.out.println();
+           // System.out.println("xx" + nearby_list.size() +" "+widest_index);
+            if(widest_index == -1) return new Point(0,0);
             Point p1 = nearby_list.get(widest_index).angle;
             Point p2 = nearby_list.get(widest_index-1<0?nearby_list.size()-1:widest_index-1).angle;
             
             p2 = rotate_counter_clockwise(p2, widest/2);
             
-            
+       //     System.out.println(p2.x + " p2 "+ p2.y);
             //return new Move(p3, memory);
             return p2;
         } else if(nearby_list.size() == 1) {
@@ -120,9 +133,12 @@ public class Player implements slather.sim.Player {
     private double angleBetweenVectors(Point p1, Point p2) {
     	double x1 = p1.x, x2 = p2.x, y1 = p1.y, y2 = p2.y;
     	double dot = x1*x2 + y1*y2;    
-    	double det = x1*y2 - y1*x2;  
+    	double det = x1*y2 - y1*x2; 
+    	//System.out.println("det, dot " + det + " " + dot);
     	double angle = Math.atan2(det, dot);
+    	//System.out.println("angle " + angle);
     	if(angle < 0) angle += 2*Math.PI;
+    	//System.out.println("angle " + angle);
     	return angle;
     }
     private Point getLargestTraversableDistance(
@@ -135,19 +151,22 @@ public class Player implements slather.sim.Player {
     	
     	double small = 0;
     	double large = 1;
-    	while(large - small > 0.001) {
-    		double mid = (small + large) / 2;
-    		Point vector = new Point(direction.x * mid, direction.y * mid);
-    		boolean can_move = !collides(player_cell, vector, nearby_cells, nearby_pheromes);
-    		if(can_move) small = mid;
-    		else large = mid;
+    	Point best = new Point(0,0);
+    	for(double scale = large; scale >= small; scale -= 0.05) {
+    		Point new_direction = new Point(direction.x*scale, direction.y*scale);
+    		if(!collides(player_cell, new_direction, nearby_cells, nearby_pheromes)) {
+    			best = new_direction;
+    			break;
+    		}
     	}
-    	Point nextPoint = new Point(direction.x * small, direction.y * small);
     	
-    	return new Point(direction.x * small, direction.y * small);
+    	return best;
     }
     private Point pathBetweenTangents(
     		Cell player_cell, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
+    	if(true) {
+    		return pathOfLeastResistance(player_cell, nearby_cells, nearby_pheromes);
+    	}
     	class GridObjectAnglePair{
             GridObject gridObject;
             Point angle;
@@ -273,7 +292,7 @@ public class Player implements slather.sim.Player {
     						Set<GridObject> nearby_objects, double d_restrict) {
     	Set<GridObject> nearby_objects_restricted = new HashSet<GridObject>();
     	for (GridObject near_cell :nearby_objects ) {
-            if (player_cell.distance(near_cell) <= d_restrict ) {
+            if (player_cell.distance(near_cell) <= d_restrict + 0.011) {
             	nearby_objects_restricted.add(near_cell);
                 
             }
@@ -345,20 +364,51 @@ public class Player implements slather.sim.Player {
     public Move play(Cell player_cell, byte memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
         //restrict to d_restrict mm sight
     	//System.out.println(nearby_cells.size());
-    	
+    	//System.out.println("CELLLLLL!!!");
         double d_restrict = THRESHOLD_DISTANCE;
+        Set<Integer> enems = new HashSet<Integer>();
+        for(Cell cell : nearby_cells) if(cell.player != player_cell.player) enems.add(cell.player);
+        //int num_players = 
+    	//if(num_players < enems) memory = 
+        //if(bigd) d_restrict = 5;
         d_restrict = Math.min(d_restrict,d_);
+
         @SuppressWarnings("unchecked")
 		Set<Cell> nearby_cells_restricted = 
         		(Set<Cell>)(Set<?>)
         		getRestrictedGridObjects(player_cell, new HashSet<GridObject>(nearby_cells), d_restrict);
+        boolean safe = true;
+        while(safe && d_restrict<d_ && d_restrict<3.01){
+            for (Cell c :nearby_cells_restricted ) {
+                if(c.player != player_cell.player){
+                    safe = false;
+                    break;
+                }
+            }
+            if(safe){
+                d_restrict += 0.5;
+                nearby_cells_restricted = (Set<Cell>)(Set<?>)
+                    getRestrictedGridObjects(player_cell, new HashSet<GridObject>(nearby_cells), d_restrict);
+            }
+        }
         @SuppressWarnings("unchecked")
 		Set<Pherome> nearby_pheromes_restricted = 
         		(Set<Pherome>)(Set<?>)
         		getRestrictedGridObjects(player_cell, new HashSet<GridObject>(nearby_pheromes), d_restrict);
         
-        
-        
+        /*if(collides(player_cell, new Point(0,0), nearby_cells, nearby_pheromes)) {
+        	System.out.println("ALREADY COLLIDES");
+        }*/
+        //System.out.println(player_cell.getDiameter());
+        //if(true) return new Move(new Point(0,0),memory);
+        //System.out.println(player_cell.player +" player: ("+ player_cell.getPosition().x +
+        //		", "+ player_cell.getPosition().y+")" );
+//        for(Cell ob : nearby_cells) {
+//        	System.out.println(ob.player +": ("+ ob.getPosition().x +", "+ ob.getPosition().y+") pherome? no");
+//        }
+//        for(Pherome ob : nearby_pheromes) {
+//        	System.out.println(ob.player +": ("+ ob.getPosition().x +", "+ ob.getPosition().y+") pherome? yes");
+//        }
 
         //System.out.println(nearby_cells_restricted.size());
         memory = 
@@ -370,7 +420,15 @@ public class Player implements slather.sim.Player {
         				nearby_pheromes_restricted);
         // reproduce whenever possible
         if (player_cell.getDiameter() >= 2) {
-            return new Move(true, (byte)memory, (byte)memory);
+        	int mem1 = gen.nextInt(8);
+        	int mem2 = gen.nextInt(8);
+        	int which = 0;
+        	mem1<<=3;
+        	mem2<<=3;
+        	which <<= 6;
+        	byte memory1 = (byte) (which | memory | mem1);
+        	byte memory2 = (byte) (which | memory | mem2);
+            return new Move(true, (byte)memory1, (byte)memory2);
         }
 
         if(isEarlyGame(memory)) {
@@ -442,8 +500,21 @@ public class Player implements slather.sim.Player {
 		int num_friendlies = friendlies.size();
 		int num_enemies = enemies.size();
 		Point direction;
-		if(num_enemies < EXPANSION_RATIO * num_friendlies) {
-			direction = pathBetweenTangents(player_cell, friendlies, new HashSet<Pherome>());
+		double exp_ratio = (memory>>3)*0.1 + EXPANSION_RATIO;
+		int which = memory>>6;
+		int rand = gen.nextInt(100);
+		if(rand > 33) {
+			which = 0;
+		} else {
+			which = 1;
+		}
+		if(num_enemies > 0 /*(1/exp_ratio)*num_friendlies*/ && num_enemies < exp_ratio * num_friendlies) {
+			if(which == 1) {
+				direction = pathBetweenTangents(player_cell, friendlies, new HashSet<Pherome>());
+			} else {
+				direction = pathBetweenTangents(player_cell, enemies, new HashSet<Pherome>());
+				direction = rotate_counter_clockwise(direction, Math.PI);
+			}
 		} else {
 			direction = pathBetweenTangents(player_cell, nearby_cells_restricted, nearby_pheromes_restricted);
 		}
@@ -454,12 +525,30 @@ public class Player implements slather.sim.Player {
 		if (!collides(player_cell, direction, nearby_cells_restricted, nearby_pheromes_restricted)) {
 			return new Move(direction, memory);
 		} else {
-			Cell closest = getClosest(player_cell, nearby_cells_restricted);
-	    	direction = getClosestDirection(closest.getPosition(), player_cell.getPosition());
-	    	getLargestTraversableDistance(direction,
-	    			player_cell,
-	    			nearby_cells_restricted,
-	    			nearby_pheromes_restricted);
+			boolean found = false;
+			for(double scale = 1.0; scale >= 0.0 && !found; scale -= 0.05) {
+				for(int i = 0; i < 10 && !found; ++ i) {
+					double x = gen.nextDouble();
+					double y = gen.nextDouble();
+					Point new_dir = getUnitVector(new Point(x,y));
+					Point new_location = new Point(scale*new_dir.x, scale*new_dir.y);
+					if(!collides(player_cell, new_location, nearby_cells_restricted, nearby_pheromes_restricted)) {
+						direction = new_location;
+						found = true;
+					}
+					
+				}
+			}
+			
+			if(direction.x == 0 && direction.y == 0) {
+				Cell closest = getClosest(player_cell, nearby_cells_restricted);
+		    	direction = getClosestDirection(closest.getPosition(), player_cell.getPosition());
+		    	
+		    	getLargestTraversableDistance(direction,
+		    			player_cell,
+		    			nearby_cells_restricted,
+		    			nearby_pheromes_restricted);
+	    	}
 	    	return new Move(direction, memory);
 		}
 		
@@ -514,22 +603,23 @@ public class Player implements slather.sim.Player {
     	
         if(nextPath.x != 0 && nextPath.y != 0) {
             if(!collides(player_cell, nextPath, nearby_cells_restricted, nearby_pheromes_restricted)) {
-                return new Move(nextPath, loadAngleToMemory(memory, nextPath));
+                return new Move(nextPath, memory);
             } else {
             	Point vector = getLargestTraversableDistance(
     					nextPath, player_cell, nearby_cells_restricted, nearby_pheromes_restricted);
             	if(vector.norm() > 0.05
             			&& !collides(player_cell, vector, nearby_cells_restricted, nearby_pheromes_restricted)) {
             		return new Move(
-            			vector, loadAngleToMemory(memory, vector));
+            			vector, memory);
             	}
             }
         } else {
             // continue moving in the same direction as before
-            Point vector = extractVectorFromAngle( (int)(memory>>3));
+            //Point vector = extractVectorFromAngle( (int)(memory>>3));
             // check for collisions
-            if (!collides( player_cell, vector, nearby_cells_restricted, nearby_pheromes_restricted))
-            return new Move(vector, memory);
+            //if (!collides( player_cell, vector, nearby_cells_restricted, nearby_pheromes_restricted))
+            
+            return new Move(new Point(0,0), memory);
         }
         
 
@@ -580,8 +670,8 @@ public class Player implements slather.sim.Player {
     while (cell_it.hasNext()) {
         Cell other = cell_it.next();
         if ( destination.distance(other.getPosition()) 
-        		< 0.021*player_cell.getDiameter() 
-        		+ 0.5*player_cell.getDiameter() 
+        		< //0.021*player_cell.getDiameter() +
+        		 0.5*player_cell.getDiameter() 
         		+ 0.5*other.getDiameter() 
         		+ 0.00011) 
         return true;

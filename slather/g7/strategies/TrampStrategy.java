@@ -40,7 +40,6 @@ public class TrampStrategy implements Strategy {
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Tramp strategy. Go to free space.");
 		Point nextStep = generateNextDirection(player_cell, memory, nearby_cells, nearby_pheromes);
 		Memory nextMem = generateNextMoveMemory(memory);
 
@@ -50,7 +49,6 @@ public class TrampStrategy implements Strategy {
 	@Override
 	public Point generateNextDirection(Cell player_cell, Memory memory, Set<Cell> nearby_cells,
 			Set<Pherome> nearby_pheromes) {
-		System.out.println("Tramp strategy. Head to free space.");
 		Point nextStep = headToFreeSpace(player_cell, nearby_cells, nearby_pheromes);
 
 		return nextStep;
@@ -63,6 +61,8 @@ public class TrampStrategy implements Strategy {
 	public static Point headToFreeSpace(Cell myCell, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
 		// Point runFromCells = runFromAll(myCell, nearby_cells, 1.0);
 		// Point runFromPheromes = runFromAll(myCell, nearby_pheromes, 0.5);
+		
+		long startTime = System.nanoTime();
 
 		Point myPoint = myCell.getPosition();
 		nearby_cells = ToolBox.limitVisionOnCells(myCell, nearby_cells, vision);
@@ -78,14 +78,16 @@ public class TrampStrategy implements Strategy {
 			double angle = ToolBox.getCosine(myCell.getPosition(), g.getPosition());
 			angleMap.put(angle, g);
 		}
+		
+//		long time1=System.nanoTime();
+//		long time1mil=(time1-startTime)/1000000;
+//		System.out.println("Time point 1 in play "+time1mil);
 
 		/* Find the largest gap between things */
 		if (angleMap.size() == 0) {
-			System.out.println("Nothing around. Just go somewhere. ");
 			Point dir = new Point(gen.nextDouble() - 0.5, gen.nextDouble() - 0.5);
 			return ToolBox.normalizeDistance(dir);
 		} else if (angleMap.size() == 1) {
-			System.out.println("Only one cell around.");
 			double toGo = angleMap.firstKey() + Math.PI;
 			return ToolBox.newDirection(toGo);
 		}
@@ -103,7 +105,6 @@ public class TrampStrategy implements Strategy {
 
 			double thisAngle = e.getKey();// this is the angle of the center
 			double angleDiff = ToolBox.angleDiff(lastAngle, thisAngle);
-			System.out.println("Angle difference with no regard to radius is:" + angleDiff);
 			// If the object is cell, need to consider the radius
 			Point mp = myCell.getPosition();
 			
@@ -115,14 +116,11 @@ public class TrampStrategy implements Strategy {
 				// calculate the distance between two points
 				Point diffPoint = ToolBox.pointDistance(cp, mp);
 				double mc = diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y;
-				System.out.println("Distance between points is:" + mc);
 				if (mc <= 0.00001) {// might overflow
-					System.out.println("Error: Distance between cells is smaller than radius!");
 				} else {
 					double cr = c.getDiameter();
 					// If the object is cell, the distance cannot be 0
 					double diffTheta = Math.asin(cr / mc);
-					System.out.println("Subtracting theta covered by cell radius: " + diffTheta);
 					angleDiff -= diffTheta;
 					endAngleTan=diffTheta;
 				}
@@ -133,14 +131,11 @@ public class TrampStrategy implements Strategy {
 				// calculate the distance between two points
 				Point diffPoint = ToolBox.pointDistance(cp, mp);
 				double mc = diffPoint.x * diffPoint.x + diffPoint.y * diffPoint.y;
-				System.out.println("Distance between points is:" + mc);
 				if (mc <= 0.00001) {// might overflow
-					System.out.println("Error: Distance between cells is smaller than radius!");
 				} else {
 					double cr = c.getDiameter();
 					// If the object is cell, the distance cannot be 0
 					double diffTheta = Math.asin(cr / mc);
-					System.out.println("Subtracting theta covered by cell radius: " + diffTheta);
 					angleDiff -= diffTheta;
 					startAngleTan=diffTheta;
 				}
@@ -156,14 +151,13 @@ public class TrampStrategy implements Strategy {
 			lastAngle = thisAngle;
 			lastPoint = thisPoint;
 		}
-		System.out.println("The largest gap found so far is: " + largestGap);
+		
+//		long time2=System.nanoTime();
+//		long time2mil=(time2-time1)/1000000;
+//		System.out.println("Time point 2 in play "+time2mil);
 
 		/* Decide the angle to go */
 		double toGo = largestGapStart - 0.5 * largestGap;
-		/* Todo: What if the largest gap is 0? Very unlikely */
-		if (toGo == 0.0) {
-			System.out.println("The largest gap is 0?!");
-		}
 
 		/* Generate the point to go */
 		return ToolBox.newDirection(toGo);

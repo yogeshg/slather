@@ -39,7 +39,6 @@ public class SpearmanStrategy implements Strategy{
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Spearman Strategy. Head to enemies and away from friends.");
 		Point nextStep=generateNextDirection(player_cell,memory,nearby_cells,nearby_pheromes);
 		Memory nextMem = generateNextMoveMemory(memory);
 
@@ -49,23 +48,29 @@ public class SpearmanStrategy implements Strategy{
 	@Override
 	public Point generateNextDirection(Cell player_cell, Memory memory, Set<Cell> nearby_cells,
 			Set<Pherome> nearby_pheromes) {
+		long startTime=System.nanoTime();
+		
 		Grouping groups = new Grouping(player_cell, nearby_cells, nearby_pheromes);
-
+		
 		/* Migrate from merging vectors to merging gravity */
-//		Point fromFriendCells = ToolBox.joinForcesFromCells(player_cell, groups.friendCells, weightOfCells, 1,
-//				considerRadius);
-//		Point fromEnemyCells = ToolBox.joinForcesFromCells(player_cell, groups.enemyCells, weightOfCells, -1,
-//				considerRadius);
-//		Point fromEnemyPheromes = ToolBox.joinForcesFromPheromes(player_cell, groups.enemyPheromes, weightOfPheromes,
+//		Point fromFriendCells = ToolBox.joinGravityFromCells(player_cell, groups.friendCells, weightOfCells, 1);
+//		Point fromEnemyCells = ToolBox.joinGravityFromCells(player_cell, groups.enemyCells, weightOfCells, -1);
+//		Point fromEnemyPheromes = ToolBox.joinGravityFromPheromes(player_cell, groups.enemyPheromes, weightOfPheromes,
 //				-1);
-		Point fromFriendCells = ToolBox.joinGravityFromCells(player_cell, groups.friendCells, weightOfCells, 1);
-		Point fromEnemyCells = ToolBox.joinGravityFromCells(player_cell, groups.enemyCells, weightOfCells, -1);
-		Point fromEnemyPheromes = ToolBox.joinGravityFromPheromes(player_cell, groups.enemyPheromes, weightOfPheromes,
-				-1);
+//		Point fromFriendPheromes = ToolBox.joinGravityFromPheromes(player_cell, groups.friendPheromes, weightOfPheromes,
+//				1);
+		
+//		Point fromFriendCells = ToolBox.joinForcesFromCells(player_cell, groups.friendCells, weightOfCells, 1,true);
+		Point fromEnemyCells = ToolBox.joinForcesFromCells(player_cell, groups.enemyCells, weightOfCells, -1, true);
+		Point fromEnemyPheromes = ToolBox.joinForcesFromPheromes(player_cell, groups.enemyPheromes, weightOfPheromes, -1);
+//		Point fromFriendPheromes = ToolBox.joinGravityFromPheromes(player_cell, groups.friendPheromes, weightOfPheromes,
+//				1);
 
-		// Todo: Consider how far to go into the cluster?
+		Point mergedForce = ToolBox.normalizeDistance(fromEnemyCells, fromEnemyPheromes);
+//		
+		if(Math.abs(mergedForce.x)<0.00001&&Math.abs(mergedForce.y)<0.00001)
+			return ToolBox.generateRandomDirection();
 
-		Point mergedForce = ToolBox.normalizeDistance(fromFriendCells, fromEnemyCells, fromEnemyPheromes);
 		return mergedForce;
 	}
 

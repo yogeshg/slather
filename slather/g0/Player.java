@@ -30,7 +30,7 @@ public class Player implements slather.sim.Player {
 	    if (!collides( player_cell, vector, nearby_cells, nearby_pheromes))
 		return new Move(vector, memory);
 	}
-
+	
 	// if no previous direction specified or if there was a collision, try random directions to go in until one doesn't collide
 	for (int i=0; i<4; i++) {
 	    int arg = gen.nextInt(180)+1;
@@ -38,7 +38,7 @@ public class Player implements slather.sim.Player {
 	    if (!collides(player_cell, vector, nearby_cells, nearby_pheromes)) 
 		return new Move(vector, (byte) arg);
 	}
-
+	
 	// if all tries fail, just chill in place
 	return new Move(new Point(0,0), (byte)0);
     }

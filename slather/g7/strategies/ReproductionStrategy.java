@@ -16,7 +16,6 @@ public class ReproductionStrategy implements Strategy{
 	@Override
 	public Memory generateNextMoveMemory(Memory currentMemory) {
 		// Not needed
-		System.out.println("Error: Reproduction strategy should not call generateNextMoveMemory!");
 		return null;
 	}
 
@@ -32,10 +31,8 @@ public class ReproductionStrategy implements Strategy{
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Reproduction strategy. Reproduce now.");
 		Memory childMemory = generateFirstChildMemory(memory);
 		Memory secondChildMemory = generateSecondChildMemory(memory, childMemory);
-		System.out.println("Child 1 memory:"+childMemory.getByte()+", child 2 memory: "+secondChildMemory.getByte());
 		return new Move(true, childMemory.getByte(), secondChildMemory.getByte());
 	}
 
@@ -43,7 +40,6 @@ public class ReproductionStrategy implements Strategy{
 	public Point generateNextDirection(Cell player_cell, Memory memory, Set<Cell> nearby_cells,
 			Set<Pherome> nearby_pheromes) {
 		// Not needed
-		System.out.println("Error: Reproduction strategy should not call generateNextDirection!");
 		return null;
 	}
 

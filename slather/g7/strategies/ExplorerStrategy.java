@@ -35,7 +35,6 @@ public class ExplorerStrategy implements Strategy {
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Explorer strategy. Go out and back in iteratively.");
 		Point nextStep=generateNextDirection(player_cell,memory,nearby_cells,nearby_pheromes);
 		Memory nextMem = generateNextMoveMemory(memory);
 
@@ -46,7 +45,6 @@ public class ExplorerStrategy implements Strategy {
 	public Point generateNextDirection(Cell player_cell, Memory memory, Set<Cell> nearby_cells,
 			Set<Pherome> nearby_pheromes) {
 		Point moveDirection;
-		System.out.println("Cell is explorer.");
 		ExplorerMemory memObj = (ExplorerMemory) memory;
 		moveDirection = getCumulativeDirection(player_cell, nearby_cells, nearby_pheromes);
 		// Last bit denotes direction of movement
@@ -83,10 +81,8 @@ public class ExplorerStrategy implements Strategy {
 		Point normalized = ToolBox.normalizeDistance(fromCells, fromPheromes);
 
 		if (normalized.x == 0.0 && normalized.y == 0.0) {
-			System.out.println("Nothing around. Decide the direction arbitrarily");
 			normalized = ToolBox.normalizeDistance(ToolBox.generateRandomDirection());
 		}
-		System.out.println("The direction is x: " + normalized.x + " y: " + normalized.y);
 
 		return normalized;
 	}

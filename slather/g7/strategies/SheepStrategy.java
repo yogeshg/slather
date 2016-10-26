@@ -38,7 +38,6 @@ public class SheepStrategy implements Strategy {
 
 	@Override
 	public Move generateMove(Cell player_cell, Memory memory, Set<Cell> nearby_cells, Set<Pherome> nearby_pheromes) {
-		System.out.println("Sheep Strategy. Run from enemies and head to friends.");
 		Point nextStep=generateNextDirection(player_cell,memory,nearby_cells,nearby_pheromes);
 		Memory nextMem = generateNextMoveMemory(memory);
 
